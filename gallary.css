@@ -1,0 +1,70 @@
+img{
+width: 300px;
+height: 300px;
+margin: auto;
+border-radius: 20px;
+object-fit: cover;
+opacity: 0.5;
+transition: transform 0.8s;
+}
+
+img:hover{
+opacity: 1;
+transform: scale(1.2);
+border: 1px solid
+
+white;
+
+}
+
+.img-frame{
+  width: 450px;
+  height: 450px;
+  margin: 0 auto;
+  border-radius: 20px;
+  overflow: visible;       
+  position: relative;       
+}
+
+
+.img-frame > img.img-fluid{
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  display: block;
+  object-fit: contain;
+  opacity: 0.5;
+  transition: transform 0.8s, opacity 0.8s;
+  transform-origin: center;
+}
+
+
+.img-card{
+  text-align: center;
+  position: relative;
+}
+
+.img-card:hover{
+  z-index: 10; 
+}
+
+.img-card:hover .img-frame > img.img-fluid{
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.img-card:hover .img-frame{
+  border: 1px solid white;
+}
+
+
+.img-name{
+  margin-top: 40px;
+  font-size: 18px;
+  font-weight: 600;
+  color: black;
+  opacity: 0.5;
+  transition: opacity 0.8s;
+}
+
+.img-card:hover .img-name{ opacity: 1; }
