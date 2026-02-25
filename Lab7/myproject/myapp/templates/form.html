@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>บันทึกข้อมูลพนักงาน</title>
+
+  <style>
+    :root{
+      /* ปรับสีเอาเองตามใจมนุษย์ */
+      --bg: #eee7e7;
+      --card-bg: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --shadow: 0 12px 28px rgba(0,0,0,.10);
+      --radius: 18px;
+      --btn: #1f9d3a;
+      --btn-hover: #178a31;
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .page{
+      min-height: 100vh;
+      padding: 40px 16px;   /* ลดจาก 60 */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .card{
+      width: min(480px, 90%);   /* เดิม 720px */
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px 36px;
+    }
+
+    .title{
+      font-size: 30px;   /* เดิม 44px */
+      margin-bottom: 20px;
+    }
+
+    .field{
+      margin-bottom: 22px;
+    }
+
+    label{
+      display: block;
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: #0b0f18; /* ปรับได้ */
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    select{
+      width: 100%;
+      height: 54px;
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: 18px;
+      outline: none;
+      background: #fff;
+    }
+
+    input::placeholder{
+      color: var(--muted);
+    }
+
+    input:focus,
+    select:focus{
+      border-color: #8aa4ff; /* ปรับได้ */
+      box-shadow: 0 0 0 4px rgba(138,164,255,.25);
+    }
+
+    .btn{
+      margin-top: 8px;
+      width: 100%;
+      height: 58px;
+      border: none;
+      border-radius: 8px;
+      background: var(--btn);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn:hover{
+      background: var(--btn-hover);
+    }
+
+    .btn-secondary{
+      margin-top: 10px;
+      display: block;
+      text-align: center;
+      height: 48px;
+      line-height: 48px;
+      background: #9ca3af;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 8px;
+      color: #fff;
+    }
+
+    .btn-secondary:hover{
+      background: #6b7280;
+    }
+
+    /* ทำให้ดูคล้ายรูป: spacing โล่ง ๆ */
+    @media (max-width: 520px){
+      .card{ padding: 34px 22px 28px; }
+      .title{ font-size: 34px; }
+      label{ font-size: 22px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="card">
+      <h1 class="title">บันทึกข้อมูลพนักงาน</h1>
+
+      <!-- ถ้าใช้ Django: ใส่ {% csrf_token %} ตรงนี้ -->
+      <form method="post" action="">
+        <!-- Django: {% csrf_token %} -->
+
+        <div class="field">
+          <label for="full_name">Full Name</label>
+          <input type="text" id="full_name" name="full_name" placeholder="" required />
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="" required />
+        </div>
+
+        <div class="field">
+          <label for="position">Position</label>
+          <select id="position" name="position" required>
+            <option value="Manager" selected>Manager</option>
+            <option value="Supervisor">Supervisor</option>
+            <option value="Staff">Staff</option>
+            <option value="Intern">Intern</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="phone">Phone Number</label>
+          <input type="tel" id="phone" name="phone" placeholder="" />
+        </div>
+
+        <button class="btn" type="submit">Submit</button>
+        <a href="{% url 'myapp:index' %}" class="btn btn-secondary">กลับหน้าแรก</a>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
