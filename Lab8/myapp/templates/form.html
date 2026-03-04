@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}
+    <title>Register</title>
+{% endblock %}
+{% block page_title %}
+[<span style="color: red;">Form</span>]
+{% endblock %}
+{% block content %}
+    <div class="container-fluid d-flex justify-content-center align-items-center" style="height: 100vh;">
+        <div class="container" style="max-width: 700px;">
+            <h1 style="background-color: rgb(33, 86, 184); color: white; padding: 2% 3%; border-radius: 10px; font-weight: bolder; text-align: center;">
+                แบบฟอร์มบันทึกข้อมูล
+            </h1>
+            <div class="container-s">
+                <form style="border: solid black 1px; padding: 4% 5%; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
+                    <div class="mb-3 ">
+                        <label for="exampleInputName" class="form-label">ชื่อ
+                        </label>
+                        <input type="text" class="form-control" id="exampleInputName" placeholder="กรุณากรอกชื่อ-นามสกุล">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleInputAge" class="form-label">อายุ</label>
+                        <input type="text" class="form-control" id="exampleInputAge"  placeholder="กรุณากรอกข้อมูลอายุเป็นตัวเลข">
+                    </div>
+                    <button type="submit" class="btn btn-success">ลงทะเบียน</button>
+                    <button type="reset" class="btn btn-danger">ล้างข้อมูล</button>
+                </form>
+            </div>    
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}
+    <title>About</title>
+        <style>
+
+        .gallery-container {
+            padding: 60px 0;
+            width: 100%;
+        }
+
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            aspect-ratio: 1 / 1; /* บังคับให้เป็นสี่เหลี่ยมจัตุรัส */
+            margin-bottom: 20px; /* ระยะห่างด้านล่างสำหรับจอเล็ก */
+        }
+
+        /* เอฟเฟกต์เมื่อ Hover ที่ตัว Item */
+        .gallery-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.7);
+        }
+
+        .gallery-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* ปรับภาพให้พอดีพื้นที่โดยไม่เสียสัดส่วน */
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover .gallery-img {
+            transform: scale(1.1); /* ขยายภาพเล็กน้อย */
+        }
+
+        /* ปรับแต่ง Bootstrap Tooltip */
+        .tooltip-inner {
+            background-color: #fff !important;
+            color: #000 !important;
+            font-weight: bold;
+            font-size: 1rem;
+            border-radius: 8px;
+            padding: 10px 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .bs-tooltip-top .tooltip-arrow::before,
+        .bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before {
+            border-top-color: #fff !important;
+        }
+
+    </style>
+{% endblock %}
+{% block page_title %}
+[<span style="color: red;">About</span>]
+{% endblock %}
+{% block content %}
+<!-- make sure content begins immediately after banner; avoid overlapping by removing fixed 100vh height -->
+<div class="container-fluid py-5">
+    <div class="container gallery-container">
+        
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+            
+            <div class="col">
+                <div class="gallery-item" data-bs-toggle="tooltip" data-bs-placement="top" title="Python: ภาษาที่อ่านง่าย ทรงพลัง เหมาะสำหรับ AI, Web Dev (Django) และ Data Science">
+                    <img src="https://www.bltbangkok.com/wp-content/uploads/2024/07/%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B9%81%E0%B8%95%E0%B8%81%E0%B8%95%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B8%A3%E0%B8%B0%E0%B8%AB%E0%B8%A7%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B8%99%E0%B8%B1%E0%B8%81%E0%B8%AD%E0%B8%AD%E0%B8%81%E0%B9%81%E0%B8%9A%E0%B8%9A%E0%B9%80%E0%B8%A7%E0%B9%87%E0%B8%9A%E0%B9%84%E0%B8%8B%E0%B8%95%E0%B9%8C%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%99%E0%B8%B1%E0%B8%81%E0%B8%9E%E0%B8%B1%E0%B8%92%E0%B8%99%E0%B8%B2%E0%B9%80%E0%B8%A7%E0%B9%87%E0%B8%9A%E0%B9%84%E0%B8%8B%E0%B8%95%E0%B9%8C.jpg" alt="Python" class="gallery-img">
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="gallery-item" data-bs-toggle="tooltip" data-bs-placement="top" title="JavaScript: หัวใจของ Web Frontend และ Backend (Node.js)">
+                    <img src="https://i.imgur.com/nedPP4z.jpg" alt="JavaScript" class="gallery-img">
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="gallery-item" data-bs-toggle="tooltip" data-bs-placement="top" title="HTML & CSS: พื้นฐานการสร้างโครงสร้างและตกแต่งหน้าเว็บไซต์">
+                    <img src="https://online.brandrankup.com/wp-content/uploads/2022/09/%E0%B8%84%E0%B8%B8%E0%B8%93%E0%B8%AA%E0%B8%A1%E0%B8%9A%E0%B8%B1%E0%B8%95%E0%B8%B4%E0%B8%82%E0%B8%AD%E0%B8%87%E0%B8%99%E0%B8%B1%E0%B8%81%E0%B8%AD%E0%B8%AD%E0%B8%81%E0%B9%81%E0%B8%9A%E0%B8%9A%E0%B9%80%E0%B8%A7%E0%B9%87%E0%B8%9A%E0%B9%84%E0%B8%8B%E0%B8%95%E0%B9%8C%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%A1%E0%B8%B5%E0%B8%84%E0%B8%B8%E0%B8%93%E0%B8%A0%E0%B8%B2%E0%B8%9E-4.jpg" alt="HTML/CSS" class="gallery-img">
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="gallery-item" data-bs-toggle="tooltip" data-bs-placement="top" title="SQL: ภาษาสำหรับจัดการและดึงข้อมูลจาก Database (MySQL, PostgreSQL)">
+                    <img src="https://e794odu4uto.exactdn.com/storage/2023/10/software-4.jpg?strip=all&lossy=1&ssl=1" alt="SQL" class="gallery-img">
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="gallery-item" data-bs-toggle="tooltip" data-bs-placement="top" title="Java: มีความเสถียรสูง นิยมใช้ทำ Android และ Enterprise App">
+                    <img src="https://www.sectorlink.com/img/blog/web-devel-important.jpg" alt="Java" class="gallery-img">
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="gallery-item" data-bs-toggle="tooltip" data-bs-placement="top" title="C#: พัฒนาโดย Microsoft เด่นเรื่อง Game Dev (Unity) และ Windows App">
+                    <img src="https://www.webskittersacademy.in/wp-content/uploads/2015/08/The-Various-Shades-of-The-Job-Profile-Of-A-Web-Developer.jpg" alt="C#" class="gallery-img">
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="gallery-item" data-bs-toggle="tooltip" data-bs-placement="top" title="PHP: ภาษา Backend ในตำนานที่ยังคงขับเคลื่อนเว็บส่วนใหญ่ของโลก">
+                    <img src="https://cdn.prod.website-files.com/6331c6bbc21f6fa6209a8597/656e07a93409a75351545180_mohammad-rahmani-1bNQVGzuy0U-unsplash.jpg" alt="PHP" class="gallery-img">
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="gallery-item" data-bs-toggle="tooltip" data-bs-placement="top" title="Swift: ภาษาหลักสำหรับการพัฒนา App บน iOS และ macOS (Apple)">
+                    <img src="https://ts.cubesofttech.com/upload/user/603_what-is-software-development.jpg" alt="Swift" class="gallery-img">
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="gallery-item" data-bs-toggle="tooltip" data-bs-placement="top" title="Go (Golang): สร้างโดย Google เด่นเรื่องประสิทธิภาพและการทำงานแบบ Concurrency">
+                    <img src="https://e794odu4uto.exactdn.com/storage/2023/10/software-1-1.jpg?strip=all&lossy=1&ssl=1" alt="Go" class="gallery-img">
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

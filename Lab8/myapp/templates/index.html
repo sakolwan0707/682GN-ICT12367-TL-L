@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}
+    <title>Home</title>
+    <style>
+        .feature-img { width: 100%; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .section-padding { padding: 60px 0; }
+        .map-container, .video-container { margin-bottom: 30px; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        /* info section adjustments */
+        #info-section {
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        #info-section .row {
+            justify-content: center;
+        }
+        #info-section .feature-img {
+            max-width: 80%;
+            margin: 0 auto;
+        }
+        #info-section h3 {
+            font-size: 1.25rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid" style="height: 100vh;">
+        <div class="container" style="max-width: 700px;">
+            <p class="mt-4" style="font-size: 1.2em; text-align: center;">
+                ยินดีต้อนรับสู่เว็บไซต์ของศกลวรรณ ที่นี่คุณจะได้พบกับข้อมูลเกี่ยวกับการเรียนรู้การพัฒนาเว็บแอปพลิเคชั่นด้วยภาษาต่างๆ
+            </p>
+        </div>
+    <div id="info-section" class="container section-padding">
+        <!-- Information section -->
+        <div class="row align-items-center mb-5">
+            <div class="col-md-6">
+                <img src="https://nickuntitledasset.sgp1.cdn.digitaloceanspaces.com/2021/11/hello_world_cpp.png?w=580&ssl=1" alt="Coding 1" class="feature-img">
+            </div>
+            <div class="col-md-6 mt-3 mt-md-0">
+                <h3>จุดเริ่มต้นของฉัน</h3>
+                <p>ที่นี่คือที่ที่ฉันเริ่มหัดเขียน Hello World ในภาษาต่างๆ </p>
+            </div>
+        </div>
+
+        <div class="row align-items-center mb-5">
+            <div class="col-md-6 order-md-2">
+                <img src="https://www.spec-india.com/wp-content/uploads/2020/06/Python_Frameworks.png" alt="Coding 2" class="feature-img">
+            </div>
+            <div class="col-md-6 order-md-1 mt-3 mt-md-0">
+                <h3>การเรียนรู้ Framework</h3>
+                <p>หลังจากเข้าใจพื้นฐาน ฉันก็เริ่มหันมาเรียนภาษา C  C++ Java  JavaScrip และ Python เพื่อสร้างโปรเจกต์ที่ใช้งานได้จริง</p>
+            </div>
+        </div>
+
+        <div class="row align-items-center mb-5">
+            <div class="col-md-6">
+                <img src="https://cybertron.co.th/wp-content/uploads/elementor/thumbs/coding-man-q54rtj9pmf0qac3jmxbgax1ry76bftdloo5evaypas.jpg" alt="Coding 3" class="feature-img">
+            </div>
+            <div class="col-md-6 mt-3 mt-md-0">
+                <h3>เป้าหมายในอนาคต</h3>
+                <p>ฉันมุ่งมั่นที่จะเป็น Web Developer ที่สามารถสร้างสรรค์สิ่งใหม่ๆ ให้กับโลกเว็บเบราวเซอร์และเว็บแอพ</p>
+            </div>
+        </div>
+
+        <hr class="my-5">
+        <!-- Map and Youtube -->
+        <div class="row">
+            <div class="col-md-6">
+                <h4 class="mb-3 text-center">My Learning Studio (Map)</h4>
+                <div class="map-container">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3876.57590221981!2d100.70690037472485!3d13.683532698871177!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x311d6128327fa9c3%3A0x7a007fc2dfc89e5e!2z4Lia4Lij4Li04Lip4Lix4LiXIOC4hOC4p-C4tOC4iyDguYDguJnguYfguJXguYDguKfguLTguKPguYzguIQg4LiI4Liz4LiB4Lix4LiU!5e0!3m2!1sth!2sth!4v1772639966835!5m2!1sth!2sth" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4 class="mb-3 text-center">Recommended Tutorial (YouTube)</h4>
+                <div class="video-container">
+                    <div class="ratio ratio-16x9">
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/eg65SbqmT0s?si=NdE07mPkwpjtXvQR" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+{% endblock %}
