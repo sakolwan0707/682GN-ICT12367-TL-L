@@ -1,0 +1,523 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    <title>Stock Management - H2O</title>
+{% endblock %}
+
+{% block style %}
+    <style>
+        :root {
+            --latte-main: #C2A385;
+            --latte-light: #E6D5C3;
+            --soft-white: #FAF9F6;
+            --text-dark: #4A4A4A;
+        }
+
+        body {
+            background-color: var(--soft-white);
+            font-family: 'Prompt', sans-serif;
+        }
+
+        .stock-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .search-box {
+            max-width: 350px;
+            width: 100%;
+        }
+        
+        .input-group-search {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--latte-light);
+            background: white;
+            display: flex;
+            align-items: center;
+            padding-left: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .input-group-search input {
+            border: none;
+            padding: 10px;
+            font-size: 0.9rem;
+            width: 100%;
+            outline: none;
+        }
+
+        .stock-status-low {
+            color: #dc3545;
+            font-weight: bold;
+            background: #fff5f5;
+            padding: 4px 10px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .stock-status-normal {
+            color: #198754;
+            background: #f0fff4;
+            padding: 4px 10px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        #searchLoading {
+            display: none;
+            margin-right: 10px;
+        }
+
+        .stock-card {
+            border-radius: 15px;
+            border: 1px solid #eee;
+            background: #fff;
+            transition: transform 0.2s;
+            height: 100%;
+        }
+        .stock-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .input-row-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Back Button -->
+    <div class="row mb-3">
+        <div class="col-12 text-start">
+            <a href="{% url 'employee_nav' %}" class="btn btn-outline-secondary btn-sm" style="border-radius: 10px;">
+                <i class="bi bi-arrow-left"></i> กลับหน้าเมนูหลัก
+            </a>
+        </div>
+    </div>
+
+    <!-- Header & Search & Add Buttons -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-0" style="color: var(--latte-main);">จัดการสต็อกวัตถุดิบ</h2>
+            <p class="text-muted small mb-0">ดูแลและอัปเดตจำนวนวัตถุดิบในร้าน</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap flex-md-nowrap">
+            <div class="search-box me-md-2">
+                <form method="GET" action="{% url 'stock_manage' %}" id="searchForm" class="w-100">
+                    <div class="input-group-search shadow-sm">
+                        <div id="searchLoading" class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <i class="bi bi-search text-muted" id="searchIcon"></i>
+                        <input type="text" name="search" id="stockSearchInput" 
+                               placeholder="ค้นหาวัตถุดิบ..." 
+                               value="{{ search_query|default:'' }}" autocomplete="off">
+                    </div>
+                </form>
+            </div>
+            <button class="btn btn-primary shadow-sm" onclick="openRestockModal()" 
+                    style="border-radius: 12px; height: 45px; padding: 0 20px; font-weight: 500; background-color: #4361ee; border: none; white-space: nowrap;">
+                <i class="bi bi-box-arrow-in-down me-2"></i>เติมสต็อก
+            </button>
+            <button class="btn btn-success shadow-sm" onclick="openAddIngredientModal()" 
+                    style="border-radius: 12px; height: 45px; padding: 0 20px; font-weight: 500; border: none; white-space: nowrap;">
+                <i class="bi bi-plus-circle me-2"></i>เพิ่มใหม่
+            </button>
+        </div>
+    </div>
+
+    <div class="stock-container">
+        <!-- Desktop Table View -->
+        <div class="table-responsive d-none d-md-block">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <!-- <th style="width: 10%;">ID</th> -->
+                        <th style="width: 25%;">วัตถุดิบ</th>
+                        <th style="width: 20%;">ซัพพลายเออร์</th>
+                        <th style="width: 20%; text-align: center;">คงเหลือรวม</th>
+                        <th style="width: 15%; text-align: center;">จุดสั่งซื้อ (Min)</th>
+                        <th style="width: 10%; text-align: center;">แก้ไข</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ing in ingredients %}
+                    <tr class="stock-row">
+                        <!-- <td class="text-muted small">{{ ing.ingredient_id }}</td> -->
+                        <td class="fw-bold">{{ ing.ingredient_name }}</td>
+                        <td>{{ ing.supplier.supplier_name }}</td>
+                        <td class="text-center">
+                            <span class="{% if ing.stock_qty <= ing.min_qty %}stock-status-low{% else %}stock-status-normal{% endif %}">
+                                {{ ing.stock_qty|floatformat:2 }} {{ ing.unit }}
+                            </span>
+                        </td>
+                        <td class="text-center text-muted">{{ ing.min_qty|floatformat:2 }}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-warning shadow-sm" 
+                                    onclick="openEditStockModal('{{ ing.ingredient_id }}', '{{ ing.ingredient_name }}', '{{ ing.stock_qty }}', '{{ ing.min_qty }}', '{{ ing.supplier.supplier_id }}', '{{ ing.unit }}')"
+                                    style="border-radius: 8px; border: none; padding: 5px 15px;">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center py-5 text-muted">ไม่พบข้อมูลวัตถุดิบ</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile/Tablet Grid View -->
+        <div class="row d-md-none g-3">
+            {% for ing in ingredients %}
+            <div class="col-sm-6">
+                <div class="stock-card p-3 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <!-- <div class="small text-muted">{{ ing.ingredient_id }}</div> -->
+                            <div class="fw-bold h6 mb-0">{{ ing.ingredient_name }}</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-warning" 
+                                onclick="openEditStockModal('{{ ing.ingredient_id }}', '{{ ing.ingredient_name }}', '{{ ing.stock_qty }}', '{{ ing.min_qty }}', '{{ ing.supplier.supplier_id }}', '{{ ing.unit }}')"
+                                style="border-radius: 8px;">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
+                    <div class="small text-muted mb-2"><i class="bi bi-truck me-1"></i> {{ ing.supplier.supplier_name }}</div>
+                    
+                    <div class="p-2 rounded bg-light mb-2 d-flex justify-content-between align-items-center">
+                        <span class="small text-muted">คงเหลือ:</span>
+                        <span class="{% if ing.stock_qty <= ing.min_qty %}stock-status-low{% else %}stock-status-normal{% endif %}">
+                            {{ ing.stock_qty|floatformat:2 }} {{ ing.unit }}
+                        </span>
+                    </div>
+                    <div class="small d-flex justify-content-between px-2">
+                        <span class="text-muted">จุดสั่งซื้อ (Min):</span>
+                        <span class="fw-bold">{{ ing.min_qty|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5 text-muted">ไม่พบข้อมูลวัตถุดิบ</div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if ingredients.has_other_pages %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if ingredients.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ ingredients.previous_page_number }}&search={{ search_query }}" style="border-radius: 10px 0 0 10px;">ก่อนหน้า</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link" style="background-color: var(--latte-main); border-color: var(--latte-main);">{{ ingredients.number }} / {{ ingredients.paginator.num_pages }}</span></li>
+                {% if ingredients.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ ingredients.next_page_number }}&search={{ search_query }}" style="border-radius: 0 10px 10px 0;">ถัดไป</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Restock Modal -->
+<div class="modal fade" id="restockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 15px 50px rgba(0,0,0,0.1);">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" style="color: #4361ee;">เติมสต็อกวัตถุดิบ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="restockForm">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">เลือกวัตถุดิบ</label>
+                        <select name="ingredient_id" id="restockIngSelect" class="form-select" required style="border-radius: 10px; height: 45px;">
+                            <option value="">-- เลือกรายการ --</option>
+                            {% for ing in all_ingredients_list %}
+                                <option value="{{ ing.ingredient_id }}" data-unit="{{ ing.unit }}">
+                                    {{ ing.ingredient_name }} (คงเหลือ: {{ ing.stock_qty|floatformat:2 }} {{ ing.unit }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">จำนวนที่เพิ่ม</label>
+                        <div class="input-row-group">
+                            <div style="flex: 2;">
+                                <input type="number" step="1" id="restock_num_units" class="form-control" required placeholder="จำนวน" style="border-radius: 10px; height: 45px;">
+                            </div>
+                            <div style="flex: 1.5;">
+                                <select id="restock_classifier" class="form-select" style="border-radius: 10px; height: 45px;">
+                                    <option value="กล่อง">กล่อง</option>
+                                    <option value="ขวด">ขวด</option>
+                                    <option value="ห่อ">ห่อ</option>
+                                    <option value="ถุง">ถุง</option>
+                                    <option value="ชิ้น">ชิ้น</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">ความจุต่อ <span class="restock-classifier-label">กล่อง</span></label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" id="restock_capacity" class="form-control" required value="1" style="border-radius: 10px 0 0 10px; height: 45px;">
+                            <span class="input-group-text bg-light restock-unit-label" style="border-radius: 0 10px 10px 0;">หน่วย</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-light rounded text-center border" style="border-style: dashed !important;">
+                        <div class="text-muted small mb-1">รวมยอดที่จะบวกเพิ่มเข้าระบบ</div>
+                        <h4 class="mb-0 fw-bold text-primary">
+                            <span id="restockTotalCalc">0.00</span> <span class="restock-unit-label">หน่วย</span>
+                        </h4>
+                    </div>
+                    <input type="hidden" name="stock_qty" id="restock_final_qty">
+                </div>
+                <div class="modal-footer border-0 pt-0 pb-4 justify-content-center">
+                    <button type="submit" class="btn btn-primary px-5 fw-bold" style="border-radius: 12px; height: 45px; border: none; background-color: #4361ee;">
+                        ยืนยันการเพิ่มสต็อก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Ingredient Modal -->
+<div class="modal fade" id="addIngredientModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 15px 50px rgba(0,0,0,0.1);">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" style="color: #198754;">ลงทะเบียนวัตถุดิบใหม่</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addIngredientForm">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ชื่อวัตถุดิบ</label>
+                        <input type="text" name="name" class="form-control" required placeholder="เช่น ผงกาแฟ" style="border-radius: 10px; height: 45px;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">ซัพพลายเออร์</label>
+                        <select name="supplier_id" class="form-select" required style="border-radius: 10px;">
+                            {% for s in suppliers %}<option value="{{ s.supplier_id }}">{{ s.supplier_name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">หน่วยเรียก (นับในสูตร)</label>
+                        <select name="unit" id="add_unit" class="form-select" required style="border-radius: 10px;">
+                            <option value="กรัม">กรัม</option>
+                            <option value="มิลลิลิตร">มิลลิลิตร</option>
+                            <option value="ชิ้น">ชิ้น</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">จำนวนเริ่มต้นที่ซื้อมา</label>
+                        <div class="input-row-group">
+                            <div style="flex: 2;">
+                                <input type="number" step="1" id="add_num_units" class="form-control" required value="0" style="border-radius: 10px; height: 45px;">
+                            </div>
+                            <div style="flex: 1.5;">
+                                <select id="add_classifier" class="form-select" style="border-radius: 10px; height: 45px;">
+                                    <option value="กล่อง">กล่อง</option>
+                                    <option value="ขวด">ขวด</option>
+                                    <option value="ห่อ">ห่อ</option>
+                                    <option value="ถุง">ถุง</option>
+                                    <option value="ชิ้น">ชิ้น</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">ความจุต่อ <span class="add-classifier-label">กล่อง</span></label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" id="add_capacity" class="form-control" required value="1" style="border-radius: 10px 0 0 10px; height: 45px;">
+                            <span class="input-group-text bg-light add-unit-label" style="border-radius: 0 10px 10px 0;">กรัม</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">จุดแจ้งเตือนขั้นต่ำ (Min Qty)</label>
+                        <input type="number" step="0.01" name="min_qty" class="form-control" required value="10" style="border-radius: 10px;">
+                    </div>
+
+                    <div class="p-2 bg-light rounded text-center small border">
+                        รวมสต็อกเริ่มต้น: <span id="addTotalCalc" class="fw-bold text-success">0.00</span> <span class="add-unit-label">กรัม</span>
+                    </div>
+                    <input type="hidden" name="stock_qty" id="add_final_qty">
+                </div>
+                <div class="modal-footer border-0 pt-0 pb-4 justify-content-center">
+                    <button type="submit" class="btn btn-success px-5 fw-bold" style="border-radius: 12px; height: 45px; border: none;">
+                        บันทึกรายการใหม่
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editStockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">แก้ไขข้อมูลวัตถุดิบ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editStockForm">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="ingredient_id" id="editIngId">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">ชื่อวัตถุดิบ</label>
+                        <input type="text" id="editIngName" class="form-control bg-light" readonly style="border-radius: 10px;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">หน่วยเรียก</label>
+                        <select name="unit" id="editIngUnit" class="form-select" style="border-radius: 10px;">
+                            <option value="กรัม">กรัม</option>
+                            <option value="มิลลิลิตร">มิลลิลิตร</option>
+                            <option value="ชิ้น">ชิ้น</option>
+                            <option value="Topping">Topping</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">ยอดคงเหลือรวม</label>
+                            <input type="number" step="0.01" name="stock_qty" id="editIngQty" class="form-control border-primary" required style="border-radius: 10px;">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label text-muted small">จุดสั่งซื้อ (Min)</label>
+                            <input type="number" step="0.01" name="min_qty" id="editIngMin" class="form-control" required style="border-radius: 10px;">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">ซัพพลายเออร์</label>
+                        <select name="supplier_id" id="editIngSupplier" class="form-select" style="border-radius: 10px;">
+                            {% for s in suppliers %}
+                                <option value="{{ s.supplier_id }}">{{ s.supplier_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 pb-4 justify-content-center">
+                    <button type="submit" class="btn btn-primary px-5 fw-bold" style="background-color: var(--latte-main); border: none; border-radius: 12px; height: 45px;">
+                        บันทึกการแก้ไข
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    // Global Helper: คำนวณยอดรวม
+    function calculate(prefix) {
+        const units = parseFloat(document.getElementById(prefix + '_num_units').value) || 0;
+        const capacity = parseFloat(document.getElementById(prefix + '_capacity').value) || 0;
+        const total = units * capacity;
+        document.getElementById(prefix + 'TotalCalc').textContent = total.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById(prefix + '_final_qty').value = total;
+    }
+
+    // --- Restock Interaction ---
+    document.getElementById('restock_num_units').addEventListener('input', () => calculate('restock'));
+    document.getElementById('restock_capacity').addEventListener('input', () => calculate('restock'));
+    document.getElementById('restock_classifier').addEventListener('change', function() {
+        document.querySelectorAll('.restock-classifier-label').forEach(el => el.textContent = this.value);
+    });
+    document.getElementById('restockIngSelect').addEventListener('change', function() {
+        const unit = this.options[this.selectedIndex].getAttribute('data-unit') || 'หน่วย';
+        document.querySelectorAll('.restock-unit-label').forEach(el => el.textContent = unit);
+    });
+
+    // --- Add Interaction ---
+    document.getElementById('add_num_units').addEventListener('input', () => calculate('add'));
+    document.getElementById('add_capacity').addEventListener('input', () => calculate('add'));
+    document.getElementById('add_classifier').addEventListener('change', function() {
+        document.querySelectorAll('.add-classifier-label').forEach(el => el.textContent = this.value);
+    });
+    document.getElementById('add_unit').addEventListener('change', function() {
+        document.querySelectorAll('.add-unit-label').forEach(el => el.textContent = this.value);
+    });
+
+    // Modals
+    function openRestockModal() {
+        document.getElementById('restockForm').reset();
+        document.getElementById('restockTotalCalc').textContent = '0.00';
+        new bootstrap.Modal(document.getElementById('restockModal')).show();
+    }
+
+    function openAddIngredientModal() {
+        document.getElementById('addIngredientForm').reset();
+        document.getElementById('addTotalCalc').textContent = '0.00';
+        new bootstrap.Modal(document.getElementById('addIngredientModal')).show();
+    }
+
+    function openEditStockModal(id, name, qty, min, sup, unit) {
+        document.getElementById('editIngId').value = id;
+        document.getElementById('editIngName').value = name;
+        document.getElementById('editIngQty').value = qty;
+        document.getElementById('editIngMin').value = min;
+        document.getElementById('editIngSupplier').value = sup;
+        document.getElementById('editIngUnit').value = unit;
+        new bootstrap.Modal(document.getElementById('editStockModal')).show();
+    }
+
+    // Submit Handlers with SweetAlert2
+    function handleResponse(res) {
+        return res.json().then(data => {
+            if (data.success) {
+                Swal.fire({ icon: 'success', title: 'สำเร็จ', text: data.message, timer: 1500, showConfirmButton: false })
+                .then(() => location.reload());
+            } else {
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: data.error });
+            }
+        });
+    }
+
+    document.getElementById('restockForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        fetch("{% url 'restock_ingredient' %}", {
+            method: 'POST', body: new FormData(this), headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        }).then(handleResponse);
+    });
+
+    document.getElementById('addIngredientForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        fetch("{% url 'add_ingredient' %}", {
+            method: 'POST', body: new FormData(this), headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        }).then(handleResponse);
+    });
+
+    document.getElementById('editStockForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        fetch("{% url 'edit_ingredient' %}", {
+            method: 'POST', body: new FormData(this), headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        }).then(handleResponse);
+    });
+
+    // Search Debounce
+    let searchTimer;
+    const searchInput = document.getElementById('stockSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimer);
+            document.getElementById('searchLoading').style.display = 'inline-block';
+            document.getElementById('searchIcon').style.display = 'none';
+            searchTimer = setTimeout(() => { document.getElementById('searchForm').submit(); }, 800);
+        });
+    }
+</script>
+{% endblock %}

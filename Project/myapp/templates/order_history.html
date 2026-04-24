@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    <title>Order History - H2O</title>
+{% endblock %}
+
+{% block style %}
+    <style>
+        :root {
+            --latte-main: #C2A385;
+            --latte-light: #E6D5C3;
+            --soft-white: #FAF9F6;
+            --text-dark: #4A4A4A;
+        }
+
+        body {
+            background-color: var(--soft-white);
+            font-family: 'Prompt', sans-serif;
+        }
+
+        .history-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        /* Search Bar Style */
+        .search-box {
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .input-group-search {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--latte-light);
+            background: white;
+            display: flex;
+            align-items: center;
+            padding-left: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .input-group-search input {
+            border: none;
+            padding: 10px;
+            font-size: 0.9rem;
+            width: 100%;
+            outline: none;
+        }
+
+        /* Grid Card Style for Mobile/Tablet */
+        .order-card {
+            border-radius: 15px;
+            border: 1px solid #eee;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: #fff;
+            height: 100%;
+        }
+        .order-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+
+        /* Receipt Style (Thermal Slip) */
+        .receipt-slip {
+            font-family: 'Courier New', Courier, monospace;
+            background: #fff;
+            padding: 25px;
+            color: #333;
+        }
+        .slip-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .slip-divider {
+            border-top: 1px dashed #aaa;
+            margin: 15px 0;
+        }
+        .slip-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .item-row {
+            margin-bottom: 10px;
+        }
+        .item-note {
+            font-size: 12px;
+            color: #666;
+            padding-left: 15px;
+            font-style: italic;
+        }
+
+        #searchLoading {
+            display: none;
+            margin-right: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Back Button -->
+    <div class="row mb-3">
+        <div class="col-12 text-start">
+            <a href="{% url 'employee_nav' %}" class="btn btn-outline-secondary btn-sm" style="border-radius: 10px;">
+                <i class="bi bi-arrow-left"></i> กลับหน้าเมนูหลัก
+            </a>
+        </div>
+    </div>
+
+    <!-- Header & Search -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <h2 class="fw-bold mb-0" style="color: var(--latte-main);">ประวัติคำสั่งซื้อ</h2>
+        <div class="search-box">
+            <form method="GET" action="{% url 'order_history' %}" id="searchForm">
+                <div class="input-group-search shadow-sm">
+                    <div id="searchLoading" class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    <i class="bi bi-search text-muted" id="searchIcon"></i>
+                    <input type="text" name="search" id="orderSearchInput" 
+                           placeholder="ค้นหาเลขออเดอร์ หรือเบอร์โทร..." 
+                           value="{{ search_query|default:'' }}" autocomplete="off">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="history-container">
+        <!-- Desktop Table (Visible on md and up) -->
+        <div class="table-responsive d-none d-md-block">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 15%;">เลขที่สั่งซื้อ</th>
+                        <th style="width: 15%;">วัน-เวลา</th>
+                        <th style="width: 20%;">ชื่อลูกค้า</th>
+                        <th style="width: 15%;">เบอร์โทรศัพท์</th>
+                        <th style="width: 12%;">ยอดรวม</th>
+                        <th style="width: 13%;">สถานะ</th>
+                        <th class="text-center" style="width: 10%;">ใบเสร็จ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in page_obj %}
+                    <tr class="order-row">
+                        <td class="fw-bold">{{ order.order_id }}</td>
+                        <td class="text-muted small">{{ order.order_datetime|date:"d/m/Y H:i" }}</td>
+                        <td>{{ order.customer.cus_name|default:"ลูกค้าทั่วไป" }}</td>
+                        <td class="text-muted small">{{ order.customer.cus_phone|default:"-" }}</td>
+                        <td class="fw-bold text-primary">฿{{ order.total_amount|floatformat:2 }}</td>
+                        <td>
+                            {% if order.order_status == 'Confirmed' %}
+                                <span class="badge bg-info text-white" style="border-radius: 8px;">กำลังปรุง</span>
+                            {% elif order.order_status == 'Ready' %}
+                                <span class="badge bg-primary" style="border-radius: 8px;">พร้อมเสิร์ฟ</span>
+                            {% elif order.order_status == 'Completed' %}
+                                <span class="badge bg-success" style="border-radius: 8px;">สำเร็จ</span>
+                            {% else %}
+                                <span class="badge bg-secondary" style="border-radius: 8px;">{{ order.order_status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm text-white" 
+                                    onclick="viewOrderDetails('{{ order.order_id }}')"
+                                    style="background-color: #3498db; border: none; padding: 5px 12px; border-radius: 8px;">
+                                <i class="bi bi-receipt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">ไม่พบข้อมูลคำสั่งซื้อ</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile/Tablet Grid View (Visible on screens smaller than md) -->
+        <div class="row d-md-none g-3">
+            {% for order in page_obj %}
+            <div class="col-sm-6">
+                <div class="order-card p-3 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="fw-bold text-dark">{{ order.order_id }}</span>
+                        {% if order.order_status == 'Confirmed' %}
+                            <span class="badge bg-info text-white">กำลังปรุง</span>
+                        {% elif order.order_status == 'Ready' %}
+                            <span class="badge bg-primary">พร้อมเสิร์ฟ</span>
+                        {% elif order.order_status == 'Completed' %}
+                            <span class="badge bg-success">สำเร็จ</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ order.order_status }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="small text-muted mb-1"><i class="bi bi-calendar3 me-1"></i> {{ order.order_datetime|date:"d/m/Y H:i" }}</div>
+                    <div class="small mb-1"><i class="bi bi-person me-1"></i> {{ order.customer.cus_name|default:"ลูกค้าทั่วไป" }}</div>
+                    <div class="small mb-3"><i class="bi bi-telephone me-1"></i> {{ order.customer.cus_phone|default:"-" }}</div>
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                        <span class="fw-bold h5 mb-0 text-primary">฿{{ order.total_amount|floatformat:2 }}</span>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewOrderDetails('{{ order.order_id }}')" style="border-radius: 8px;">
+                            <i class="bi bi-receipt"></i> ดูใบเสร็จ
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5 text-muted">ไม่พบข้อมูลคำสั่งซื้อ</div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}" style="border-radius: 10px 0 0 10px;">ก่อนหน้า</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link" style="background-color: var(--latte-main); border-color: var(--latte-main);">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}" style="border-radius: 0 10px 10px 0;">ถัดไป</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none;">
+            <div class="modal-body p-0">
+                <div class="receipt-slip">
+                    <div class="slip-header">
+                        <h2 style="margin: 0; font-size: 22px; font-weight: bold; color: var(--latte-main);">H2O COFFEE</h2>
+                        <p style="margin: 2px 0 0 0; font-size: 13px; color: #888;">RECEIPT / ใบเสร็จรับเงิน</p>
+                    </div>
+                    <div class="slip-divider"></div>
+                    <div class="slip-row"><span>เลขที่:</span><span id="rec-id" style="font-weight: bold;"></span></div>
+                    <div class="slip-row"><span>วันที่:</span><span id="rec-date"></span></div>
+                    <div class="slip-row"><span>ลูกค้า:</span><span id="rec-customer"></span></div>
+                    <div class="slip-divider"></div>
+                    <div id="rec-items"></div>
+                    <div class="slip-divider"></div>
+                    <div class="slip-row" style="font-size: 18px; font-weight: bold;">
+                        <span>รวมทั้งสิ้น</span>
+                        <span>฿<span id="rec-total"></span></span>
+                    </div>
+                    <div class="slip-row"><span>การชำระเงิน:</span><span id="rec-method"></span></div>
+                    <div class="slip-divider"></div>
+                    <div class="text-center" style="font-size: 13px; color: #888; margin-top: 15px;">
+                        <p>ขอบคุณที่ใช้บริการ / THANK YOU</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center bg-white pb-4">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal" style="border-radius: 12px;">ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    // Global Real-time Search with Debounce
+    let searchTimer;
+    const searchInput = document.getElementById('orderSearchInput');
+    const searchForm = document.getElementById('searchForm');
+    const loading = document.getElementById('searchLoading');
+    const icon = document.getElementById('searchIcon');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimer);
+            loading.style.display = 'inline-block';
+            icon.style.display = 'none';
+            searchTimer = setTimeout(() => {
+                searchForm.submit();
+            }, 800);
+        });
+
+        window.onload = () => {
+            if(searchInput.value) {
+                const val = searchInput.value;
+                searchInput.value = '';
+                searchInput.focus();
+                searchInput.value = val;
+            }
+        };
+    }
+
+    function viewOrderDetails(orderId) {
+        fetch(`{% url 'get_order_details' %}?order_id=${orderId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('rec-id').textContent = data.order_id;
+                document.getElementById('rec-date').textContent = data.datetime;
+                document.getElementById('rec-customer').textContent = data.customer_name;
+                document.getElementById('rec-total').textContent = data.total.toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('rec-method').textContent = data.payment_method;
+                
+                const itemsDiv = document.getElementById('rec-items');
+                itemsDiv.innerHTML = '';
+                data.items.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'item-row';
+                    row.innerHTML = `
+                        <div class="slip-row">
+                            <span>${item.quantity}x ${item.name}</span>
+                            <span>${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                        </div>
+                        ${item.note ? `<div class="item-note">${item.note}</div>` : ''}
+                    `;
+                    itemsDiv.appendChild(row);
+                });
+                new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
+            }
+        });
+    }
+</script>
+{% endblock %}
+

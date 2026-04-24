@@ -1,0 +1,31 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('order/', views.orderdetail, name='order'),
+    path('payment/', views.payment, name='payment'),
+    path('remove_order_item/<int:item_id>/', views.remove_order_item, name='remove_order_item'),
+    path('login/', views.login, name='login'),
+    path('logout/', views.logout, name='logout'),
+    path('employee_nav/', views.employee_nav, name='employee_nav'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('admin_manage/', views.admin_manage, name='admin_manage'),
+    path('edit_product/', views.edit_product, name='edit_product'),
+    path('add_product/', views.add_product, name='add_product'),
+    path('add_ingredient/', views.add_ingredient, name='add_ingredient'),
+    path('edit_ingredient/', views.edit_ingredient, name='edit_ingredient'),
+    # path('complete_payment/', views.complete_payment, name='complete_payment'),
+    path('submit_order/', views.submit_order, name='submit_order'),
+    path('register_customer/', views.register_customer, name='register_customer'),
+    path('get_customer_info/', views.get_customer_info, name='get_customer_info'),
+    path('get_order_details/', views.get_order_details, name='get_order_details'),
+    path('queue/', views.queue, name='queue'),
+    path('order_history/', views.order_history, name='order_history'),
+    path('stock_manage/', views.stock_manage, name='stock_manage'),
+    path('restock_ingredient/', views.restock_ingredient, name='restock_ingredient'),
+    path('recipes/', views.recipe_list, name='recipes'),
+    path('save_recipe/', views.save_recipe, name='save_recipe'),
+    path('get_recipe_details/', views.get_recipe_details, name='get_recipe_details'),
+    path('update_order_status/<str:order_id>/<str:new_status>/', views.update_order_status, name='update_order_status'),
+]

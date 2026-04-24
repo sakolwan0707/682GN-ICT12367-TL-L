@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Employee Navigation - H2O</title>
+{% endblock %}
+
+{% block style %}
+    <style>
+        :root {
+            --latte-main: #C2A385;
+            --latte-light: #E6D5C3;
+            --soft-white: #FAF9F6;
+            --text-dark: #4A4A4A;
+        }
+
+        body {
+            background-color: var(--soft-white);
+            font-family: 'Prompt', sans-serif;
+        }
+
+        .nav-container {
+            height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-card {
+            background: white;
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            text-align: center;
+            transition: transform 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-dark);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 2px solid transparent;
+        }
+
+        .nav-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--latte-main);
+            color: var(--latte-main);
+        }
+
+        .nav-card.disabled {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+            opacity: 0.6;
+            filter: grayscale(1);
+            pointer-events: none;
+            border: 2px solid #ddd;
+        }
+
+        .nav-card.disabled:hover {
+            transform: none;
+            border-color: #ddd;
+        }
+
+        .nav-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--latte-main);
+        }
+
+        .nav-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .nav-desc {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-5">
+        <div class="col-12 text-center mt-5">
+            <h2 class="fw-bold">
+                <span class="d-block d-md-inline">ยินดีต้อนรับคุณ,</span>
+                <span class="d-block d-md-inline">{{ emp_name|truncatechars:15 }}</span>
+            </h2>
+            <p class="text-muted">กรุณาเลือกส่วนงานที่ต้องการดำเนินการ</p>
+        </div>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        <!-- เมนูรอคิว -->
+        <div class="col-md-4">
+            <a href="{% url 'queue' %}" class="nav-card">
+                <div class="nav-icon">
+                    <i class="bi bi-list-stars"></i>
+                </div>
+                <div class="nav-title">เมนูรอคิว</div>
+                <div class="nav-desc">จัดการรายการออเดอร์ที่กำลังปรุง</div>
+            </a>
+        </div>
+
+        <!-- สูตรการทำเครื่องดื่ม -->
+        <div class="col-md-4">
+            <a href="{% url 'recipes' %}" class="nav-card">
+                <div class="nav-icon">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <div class="nav-title">สูตรการทำ</div>
+                <div class="nav-desc">ดูสูตรและวิธีการชงเครื่องดื่ม</div>
+            </a>
+        </div>
+
+        <!-- จัดการข้อมูล -->
+        <div class="col-md-4">
+            <a href="{% url 'admin_manage' %}" class="nav-card">
+                <div class="nav-icon">
+                    <i class="bi bi-gear-wide-connected"></i>
+                </div>
+                <div class="nav-title">จัดการข้อมูล</div>
+                <div class="nav-desc">จัดการเมนูสินค้าและสต็อกวัตถุดิบ</div>
+            </a>
+        </div>
+
+        <!-- จัดการสต็อก -->
+        <div class="col-md-4">
+            <a href="{% url 'stock_manage' %}" class="nav-card">
+                <div class="nav-icon">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <div class="nav-title">จัดการสต็อก</div>
+                <div class="nav-desc">เช็คสต็อกและอัปเดตวัตถุดิบ</div>
+            </a>
+        </div>
+
+        <!-- ประวัติคำสั่งซื้อ -->
+        <div class="col-md-4">
+            <a href="{% url 'order_history' %}" class="nav-card">
+                <div class="nav-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="nav-title">ประวัติคำสั่งซื้อ</div>
+                <div class="nav-desc">ดูรายการขายและใบเสร็จย้อนหลัง</div>
+            </a>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="col-md-4">
+            {% if emp_position != 'Sales' %}
+            <a href="{% url 'dashboard' %}" class="nav-card">
+            {% else %}
+            <div class="nav-card disabled">
+            {% endif %}
+                <div class="nav-icon">
+                    <i class="bi bi-speedometer2"></i>
+                </div>
+                <div class="nav-title">Dashboard</div>
+                <div class="nav-desc">ตรวจสอบยอดขายและสรุปภาพรวม</div>
+            {% if emp_position != 'Sales' %}
+            </a>
+            {% else %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- <div class="row mt-5">
+        <div class="col-12 text-center">
+            <a href="{% url 'logout' %}" class="btn btn-outline-danger px-4" style="border-radius: 15px;">
+                ออกจากระบบ <i class="bi bi-box-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div> -->
+</div>
+{% endblock %}

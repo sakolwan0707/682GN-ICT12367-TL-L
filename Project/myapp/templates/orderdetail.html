@@ -1,0 +1,439 @@
+{% extends "base.html" %} {% block title %}
+<title>Order Detail - H2O</title>
+{% endblock %} {% block style %}
+<style>
+  .order-container {
+    max-width: 650px;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 25px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+  }
+  @media (min-width: 768px) {
+    .order-container {
+      margin: 40px auto;
+      padding: 30px;
+    }
+  }
+  .img-container {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .item-img {
+    width: 80%;
+    max-width: 300px;
+    height: auto;
+    border-radius: 20px;
+  }
+  @media (min-width: 768px) {
+    .item-img {
+      width: 50%;
+    }
+  }
+
+  .price-tag {
+    font-size: 1.8rem;
+    color: var(--latte-main);
+    font-weight: 700;
+  }
+  .option-btn {
+    border-radius: 12px;
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+  .section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .topping-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    border: 1px solid #eee;
+  }
+  .allergy-notice {
+    background-color: #fff5f5;
+    border: 1px solid #feb2b2;
+    border-radius: 12px;
+    padding: 15px;
+  }
+</style>
+{% endblock %} {% block content %}
+
+
+<div class="container my-5">
+    <div id="no-menu-selected" class="text-center py-5" style="display: none;">
+        <div class="mb-4">
+            <i class="bi bi-bag-plus" style="font-size: 4rem; color: #dee2e6;"></i>
+        </div>
+        <h2 class="fw-bold">กรุณาเลือกเมนูก่อนสั่งซื้อ</h2>
+        <p class="text-muted mb-4">คุณต้องเลือกเมนูจากหน้าแรกก่อน จากนั้นคลิกที่เมนูที่ต้องการเพื่อเข้าสู่หน้านี้</p>
+        <a href="{% url 'home' %}" class="btn btn-latte text-white px-5 py-2" style="background-color: var(--latte-main); border-radius: 12px;">
+            ไปเลือกเมนู
+        </a>
+    </div>
+</div>
+
+<div class="container mb-5" id="order-form-container">
+  <div class="order-container">
+    <div class="img-container">
+        <img id="displayImg" src="" class="item-img" alt="Product Image" />
+    </div>
+    <div id="order-content"> <div class="order-container">
+        <h3 class="text-center mb-4">รายละเอียดเมนู</h3>
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h3 id="displayName" class="fw-bold mb-1">ชื่อเมนู</h3>
+                <span class="badge bg-light text-dark border">Standard Recipe</span>
+            </div>
+            <div class="text-end">
+                <div class="price-tag">฿<span id="displayPrice">0</span></div>
+            </div>
+        </div>
+
+        <form id="orderForm" method="POST" action="{% url 'order' %}">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" id="inputId" /> 
+            <input type="hidden" name="product_name" id="inputName" />
+            <input type="hidden" name="final_price" id="inputFinalPrice" />
+    </div>
+</div>
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <label class="fw-bold mb-0">จำนวน</label>
+        <div class="input-group" style="width: 140px; border: 1px solid #ced4da; border-radius: 10px">
+          <button type="button" class="btn btn-outline-secondary border-0" onclick="changeQty(-1)">
+            <i class="bi bi-dash-lg">-</i>
+          </button>
+          <input type="number" name="quantity" id="quantity" class="form-control text-center border-0 fw-bold"value="1" min="1" readonly />
+          <button type="button" class="btn btn-outline-secondary border-0" onclick="changeQty(1)">
+            <i class="bi bi-plus-lg">+</i>
+          </button>
+        </div>
+      </div>
+
+      <hr class="my-4" style="opacity: 0.1" />
+
+      <div class="mb-4" id="type-selection-container">
+        <label class="section-title">เลือกประเภท</label>
+        <div class="d-flex gap-2">
+          <input
+            type="radio"
+            class="btn-check"
+            name="drink_type"
+            id="hot"
+            value="ร้อน"
+            checked
+            onchange="updatePrice()"
+          />
+          <label
+            class="btn btn-outline-secondary option-btn flex-fill"
+            for="hot"
+            >ร้อน</label
+          >
+
+          <input
+            type="radio"
+            class="btn-check"
+            name="drink_type"
+            id="iced"
+            value="เย็น"
+            onchange="updatePrice()"
+          />
+          <label
+            class="btn btn-outline-secondary option-btn flex-fill"
+            for="iced"
+            >เย็น</label
+          >
+
+          <input
+            type="radio"
+            class="btn-check"
+            name="drink_type"
+            id="blended"
+            value="ปั่น"
+            onchange="updatePrice()"
+          />
+          <label
+            class="btn btn-outline-secondary option-btn flex-fill"
+            for="blended"
+            >ปั่น (+5)</label
+          >
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="section-title">เลือกขนาด</label>
+        <div class="d-flex gap-2">
+          <input
+            type="radio"
+            class="btn-check"
+            name="size"
+            id="sizeS"
+            value="S"
+            checked
+            onchange="updatePrice()"
+          />
+          <label
+            class="btn btn-outline-secondary option-btn flex-fill"
+            for="sizeS"
+            >S</label
+          >
+
+          <input
+            type="radio"
+            class="btn-check"
+            name="size"
+            id="sizeM"
+            value="M"
+            onchange="updatePrice()"
+          />
+          <label
+            class="btn btn-outline-secondary option-btn flex-fill"
+            for="sizeM"
+            >M (+10)</label
+          >
+
+          <input
+            type="radio"
+            class="btn-check"
+            name="size"
+            id="sizeL"
+            value="L"
+            onchange="updatePrice()"
+          />
+          <label
+            class="btn btn-outline-secondary option-btn flex-fill"
+            for="sizeL"
+            >L (+15)</label
+          >
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="section-title">ระดับความหวาน (%)</label>
+        <div class="row g-2">
+          <div class="col-6 col-md-3">
+            <input
+              type="radio"
+              class="btn-check"
+              name="sweetness"
+              id="sw50"
+              value="50"
+            />
+            <label
+              class="btn btn-outline-secondary option-btn w-100"
+              for="sw50"
+              >50%</label
+            >
+          </div>
+
+          <div class="col-6 col-md-3">
+            <input
+              type="radio"
+              class="btn-check"
+              name="sweetness"
+              id="sw75"
+              value="75"
+            />
+            <label
+              class="btn btn-outline-secondary option-btn w-100"
+              for="sw75"
+              >75%</label
+            >
+          </div>
+
+          <div class="col-6 col-md-3">
+            <input
+              type="radio"
+              class="btn-check"
+              name="sweetness"
+              id="sw100"
+              value="100"
+              checked
+            />
+            <label
+              class="btn btn-outline-secondary option-btn w-100"
+              for="sw100"
+              >100%</label
+            >
+          </div>
+
+          <div class="col-6 col-md-3">
+            <input
+              type="radio"
+              class="btn-check"
+              name="sweetness"
+              id="sw125"
+              value="125"
+            />
+            <label
+              class="btn btn-outline-secondary option-btn w-100"
+              for="sw125"
+              >125%</label
+            >
+          </div>
+        </div>
+      </div>
+    <!--
+      <div class="mb-4">
+        <label class="section-title">เพิ่มท็อปปิ้ง</label>
+        <div class="row g-2">
+          {% for temp in ingredient %}
+          <div class="col-6">
+            <div
+              class="topping-item d-flex justify-content-between align-items-center"
+            >
+              <div class="form-check mb-0">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  name="toppings"
+                  value="{{ temp.ingredient_id }}"
+                  id="top{{ temp.ingredient_id }}"
+                  onchange="updatePrice()"
+                />
+                <label
+                  class="form-check-label small"
+                  for="top{{ temp.ingredient_id }}"
+                >
+                  {{ temp.ingredient_name }}
+                </label>
+              </div>
+              <span class="text-muted small">+฿10</span>
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-muted small ps-2">ไม่มีท็อปปิ้งให้เลือก</p>
+          {% endfor %}
+        </div>
+      </div>
+    -->
+      <div class="allergy-notice mb-4">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="allergy_milk"
+            id="allergyMilk"
+          />
+          <label class="form-check-label fw-bold text-danger" for="allergyMilk">
+            ⚠️ ฉันมีอาการแพ้นมหรือครีม (Allergy Notice)
+          </label>
+        </div>
+        <small class="text-muted d-block mt-1 ps-4"
+          >เราจะใช้ผลิตภัณฑ์ทางเลือก (ถ้ามี)
+          หรือระมัดระวังเป็นพิเศษสำหรับคุณ</small
+        >
+      </div>
+
+      <div class="mb-4">
+        <label class="section-title">หมายเหตุเพิ่มเติม</label>
+        <textarea name="note" class="form-control border-0 bg-light" rows="2" placeholder="เช่น ขอแยกน้ำแข็ง..."></textarea>
+      </div>
+
+      <div class="d-flex gap-3">
+        <button type="button" onclick="cancelOrder()" class="btn btn-light py-3 fw-bold flex-grow-1" style="border-radius: 15px">ยกเลิก</button>
+        <button type="submit" class="btn py-3 fw-bold text-white flex-grow-1" style="background-color: var(--latte-main); border-radius: 15px;flex-basis: 60%;">ยืนยันคำสั่งซื้อ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %} {% block script %}
+<script>
+  let basePrice = 0;
+
+ window.onload = function () {
+    const item = JSON.parse(localStorage.getItem("tempItem"));
+    if (item) {
+        // กำหนด Path ให้ตรงกับโฟลเดอร์ static ของคุณ
+        const imagePath = "/static/img/product/" + item.imageName;
+        
+        document.getElementById("displayImg").src = imagePath;
+        document.getElementById("displayName").innerText = item.name;
+        // Mapping ค่าลง Hidden Input
+        document.getElementById("inputId").value = item.id;
+        document.getElementById("inputName").value = item.name;
+        document.getElementById("inputFinalPrice").value = item.price;
+        
+        basePrice = parseFloat(item.price);
+
+        // จัดการกรณีประเภท "โซดา" หรือ "เมนูสุขภาพ"
+        if (item.category === "โซดา" || item.category === "Soda" || item.category === "สุขภาพ" || item.category === "Health") {
+            // เลือก "เย็น" ให้ (เป็นค่าเริ่มต้นที่เหมาะสมส่วนใหญ่) และซ่อนส่วนเลือกประเภททั้งหมด
+            if (item.category === "โซดา" || item.category === "Soda") {
+                document.getElementById("iced").checked = true;
+            }
+            // สำหรับเมนูสุขภาพ อาจจะปล่อยตาม default (ร้อน) หรือเลือกให้ตามความเหมาะสม
+            // ในที่นี้จะซ่อนแถบเลือกเพื่อให้ลูกค้าไม่ต้องเลือกตามคำขอ
+            document.getElementById("type-selection-container").style.display = 'none';
+        }
+
+        updatePrice();
+    } else {
+        // แสดงข้อความแจ้งเตือนแทนการ redirect
+        document.getElementById("no-menu-selected").style.display = "block";
+        document.getElementById("order-form-container").style.display = "none";
+    }
+};
+
+  function changeQty(val) {
+    let q = document.getElementById("quantity");
+    let newVal = parseInt(q.value) + val;
+    if (newVal >= 1) {
+      q.value = newVal;
+      updatePrice();
+    }
+  }
+
+  function updatePrice() {
+    let totalPerUnit = basePrice;
+
+    // บวกราคาปั่น
+    if (document.getElementById("blended").checked) totalPerUnit += 5;
+
+    // บวกราคาไซส์
+    if (document.getElementById("sizeM").checked) totalPerUnit += 10;
+    if (document.getElementById("sizeL").checked) totalPerUnit += 15;
+
+    // บวกราคาท็อปปิ้ง (สมมติอย่างละ 10 บาท)
+    const toppings = document.querySelectorAll(
+      'input[name="toppings"]:checked',
+    );
+    totalPerUnit += toppings.length * 10;
+
+    let qty = parseInt(document.getElementById("quantity").value);
+    let finalAmount = totalPerUnit * qty;
+
+    document.getElementById("displayPrice").innerText = finalAmount.toFixed(2);
+    document.getElementById("inputFinalPrice").value = finalAmount;
+  }
+
+  function cancelOrder() {
+    Swal.fire({
+      title: 'ยกเลิกรายการ?',
+      text: "คุณต้องการยกเลิกการสั่งซื้อเมนูนี้ใช่หรือไม่?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#C2A385',
+      confirmButtonText: 'ยกเลิกรายการ',
+      cancelButtonText: 'กลับไปหน้าเดิม'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.removeItem("tempItem");
+        window.location.href = "{% url 'home' %}";
+      }
+    })
+  }
+
+  // ต้องการให้ส่งฟอร์มด้วย server-side MVC โดยตรง จึงไม่ใช้ e.preventDefault และไม่เก็บใน localStorage ที่นี่
+
+</script>
+{% endblock %}

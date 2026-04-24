@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Queue - H2O</title>
+{% endblock %}
+{% block style %}
+        <style>
+    /* ปรับขนาดหน้าจอให้เหลือประมาณ 80% */
+    .queue-container {
+        max-width: 1200px;
+        margin: 40px auto;
+    }
+
+    /* ตกแต่ง Card ให้เข้ากับธีม Latte */
+    .queue-card {
+        border-radius: 15px;
+        border: 1px solid var(--latte-light);
+        background-color: #ffffff;
+        box-shadow: 0 4px 12px rgba(194, 163, 133, 0.1);
+        margin-bottom: 20px;
+        transition: transform 0.2s;
+    }
+
+    .queue-card:hover {
+        transform: translateY(-3px);
+    }
+
+    /* สถานะการทำงาน */
+    .status-indicator {
+        width: 10px;
+        border-radius: 15px 0 0 15px;
+    }
+
+    .bg-pending { background-color: #f1c40f; } /* สีเหลืองทอง */
+    .bg-ready { background-color: var(--latte-main); } /* สีกาแฟลาเต้ */
+
+    .section-title {
+        color: var(--text-dark);
+        font-weight: 600;
+        border-bottom: 2px solid var(--latte-light);
+        padding-bottom: 10px;
+        margin-bottom: 25px;
+    }
+
+    .badge-count {
+        background-color: var(--latte-main);
+        color: white;
+        border-radius: 50%;
+        padding: 5px 12px;
+        font-size: 0.9rem;
+    }
+
+    .note-box {
+        background-color: #fff5f5;
+        border-left: 3px solid #fc8181;
+        padding: 5px 10px;
+        margin-top: 10px;
+        font-size: 0.85rem;
+        color: #c53030;
+    }
+
+</style>
+{% endblock %}
+{% block content %}
+<div class="container queue-container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{% url 'employee_nav' %}" class="btn btn-outline-secondary btn-sm" style="border-radius: 10px;">
+                <i class="bi bi-arrow-left"></i> กลับหน้าเมนูหลัก
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 border-end">
+            <div class="d-flex justify-content-between align-items-center section-title">
+                <h4>⌛ กำลังทำ (Pending)</h4>
+                <span class="badge-count">{{ pending_count }}</span>
+            </div>
+
+            <div id="pending-section">
+                {% if pending_orders %}
+                    {% for order in pending_orders %}
+                        <div class="card queue-card mb-2">
+                            <div class="d-flex">
+                                <div class="status-indicator bg-pending"></div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="mb-1">ออเดอร์ {{ order.order_id }}</h5>
+                                            <!-- <span class="text-muted small">สั่งเมื่อ: {{ order.order_datetime|date:"H:i" }} น.</span> -->
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-success" 
+                                                onclick="showConfirmModal('Ready', '{{ order.order_id }}')">
+                                            เสร็จสิ้น
+                                        </button>
+                                    </div>
+                                    <hr class="my-2">
+                                    
+                                    <div class="order-items">
+                                        {% for item in order.items %}
+                                            <div class="fw-bold text-dark">{{ item.product.product_name }} <span class="text-secondary">x {{ item.quantity }}</span></div>
+                                            <div class="note-box mb-2">
+                                                <strong>รายละเอียด:</strong> {{ item.note }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center text-muted py-4">ไม่มีรายการกำลังทำ</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="d-flex justify-content-between align-items-center section-title ps-md-3">
+                <h4>✅ พร้อมเสิร์ฟ (Ready)</h4>
+                <span class="badge-count">{{ ready_count }}</span>
+            </div>
+
+            <div id="ready-section" class="ps-md-3">
+                {% if ready_orders %}
+                    {% for order in ready_orders %}
+                        <div class="card queue-card mb-2">
+                            <div class="d-flex">
+                                <div class="status-indicator bg-ready"></div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="mb-1">ออเดอร์ {{ order.order_id }}</h5>
+                                            <span class="badge bg-success">รอพนักงานเสิร์ฟ</span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-dark" 
+                                                onclick="showConfirmModal('Completed', '{{ order.order_id }}')">
+                                            ส่งงานแล้ว
+                                        </button>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="order-items">
+                                        {% for item in order.items %}
+                                            <div class="fw-bold text-dark">{{ item.product.product_name }} <span class="text-secondary">x {{ item.quantity }}</span></div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center text-muted py-4">ไม่มีรายการพร้อมเสิร์ฟ</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Status Modal -->
+<div class="modal fade" id="confirmStatusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="confirmTitle">ยืนยันการทำรายการ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i id="confirmIcon" class="bi fs-1 mb-3 d-block"></i>
+                <p id="confirmText" class="fs-5"></p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal" style="border-radius: 10px;">ยกเลิก</button>
+                <a id="confirmBtn" href="#" class="btn px-4" style="border-radius: 10px;">ยืนยัน</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    function showConfirmModal(status, orderId) {
+        const modal = new bootstrap.Modal(document.getElementById('confirmStatusModal'));
+        const confirmBtn = document.getElementById('confirmBtn');
+        const confirmTitle = document.getElementById('confirmTitle');
+        const confirmText = document.getElementById('confirmText');
+        const confirmIcon = document.getElementById('confirmIcon');
+
+        // สร้าง URL สำหรับ Django (ต้องระวังเรื่องการใช้ template tag ใน JS)
+        // ใช้พื้นฐานจากออเดอร์ปัจจุบัน และแทนที่ด้วย JavaScript
+        let url = "{% url 'update_order_status' 'ORDER_ID' 'STATUS' %}";
+        url = url.replace('ORDER_ID', orderId).replace('STATUS', status);
+        confirmBtn.href = url;
+
+        if (status === 'Ready') {
+            confirmTitle.innerText = "ยืนยันทำเสร็จสิ้น";
+            confirmText.innerText = "ออเดอร์ " + orderId + " ทำเสร็จพร้อมเสิร์ฟแล้วใช่หรือไม่?";
+            confirmIcon.className = "bi bi-check-circle-fill text-success fs-1 mb-3 d-block";
+            confirmBtn.className = "btn btn-success px-4";
+        } else {
+            confirmTitle.innerText = "ยืนยันการส่งงาน";
+            confirmText.innerText = "ออเดอร์ " + orderId + " ได้ส่งมอบให้ลูกค้าเรียบร้อยแล้วใช่หรือไม่?";
+            confirmIcon.className = "bi bi-send-check-fill text-primary fs-1 mb-3 d-block";
+            confirmBtn.className = "btn btn-dark px-4";
+        }
+
+        modal.show();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,588 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Payment - H2O</title>
+{% endblock %}
+{% block style %}
+    <style>
+        .checkout-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: none;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 575.98px) {
+            .checkout-card {
+                padding: 1rem;
+                border-radius: 15px;
+            }
+        }
+
+        /* ตารางรายการสินค้า */
+        .item-img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .detail-badge {
+            background-color: var(--soft-white);
+            color: var(--latte-main);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 2px;
+            border: 1px solid var(--latte-light);
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Mobile Order Item Card */
+        .order-item-mobile {
+            background: #fdfcfb;
+            border-radius: 15px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #f1ece7;
+            position: relative;
+        }
+
+        .order-item-mobile .remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        @media (max-width: 767.98px) {
+            .detail-badge {
+                max-width: 100%;
+                white-space: normal;
+                word-break: break-word;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .item-img { width: 60px; height: 60px; }
+            .detail-badge { font-size: 0.75rem; max-width: 250px; }
+        }
+
+        /* ส่วนของ Member */
+        .member-section {
+            background-color: #fcfaf8;
+            border: 1.5px dashed var(--latte-light);
+            border-radius: 20px;
+            padding: 1.2rem;
+        }
+
+        /* การจ่ายเงิน */
+        .payment-option-card {
+            cursor: pointer;
+            border: 2px solid #eee;
+            border-radius: 15px;
+            padding: 12px 5px;
+            transition: 0.2s;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-check:checked + .payment-option-card {
+            border-color: var(--latte-main);
+            background-color: rgba(194, 163, 133, 0.05);
+            color: var(--latte-main);
+            font-weight: 600;
+        }
+
+        .btn-confirm-pay {
+            background-color: var(--latte-main);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 12px;
+            font-weight: 600;
+            width: 100%;
+            transition: 0.3s;
+        }
+        
+        .btn-confirm-pay:hover {
+            background-color: #a67b5b;
+            transform: translateY(-2px);
+        }
+        
+        /* สรุปยอดเงิน Mobile Sticky */
+        @media (max-width: 991.98px) {
+            .summary-sticky {
+                position: sticky;
+                bottom: 1rem;
+                z-index: 100;
+                box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            }
+        }
+    </style>
+{% endblock %}
+{% block content %}
+<div class="row g-3 g-lg-4">
+    <!-- Left Column: Cart Items -->
+    <div class="col-lg-8">
+        <div class="checkout-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">รายการที่สั่ง</h5>
+                <a href="{% url 'home'%}" class="btn btn-sm btn-outline-primary" style="border-radius: 8px;">
+                    + เพิ่มเมนู
+                </a>
+            </div>
+            
+            <!-- Desktop Table View -->
+            <div class="table-responsive d-none d-md-block">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr style="font-size: 0.9rem;">
+                            <th>สินค้า</th>
+                            <th>รายละเอียด</th>
+                            <th class="text-center">จำนวน</th>
+                            <th class="text-end">ราคา</th>
+                            <th class="text-center"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if order_items %}
+                            {% for item in order_items %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="/static/img/product/{{ item.product_id }}.png" class="item-img me-2" onerror="this.src='https://placehold.co/60x60?text=Coffee'">
+                                            <div style="font-size: 0.95rem;">{{ item.product.product_name }}</div>
+                                        </div>
+                                    </td>
+                                    <td><span class="detail-badge" title="{{ item.note }}">{{ item.note }}</span></td>
+                                    <td class="text-center">{{ item.quantity }}</td>
+                                    <td class="text-end fw-bold">฿{{ item.unit_price|floatformat:0 }}</td>
+                                    <td class="text-center">
+                                        <button onclick="confirmRemoveItem('{{ item.order_detail_id }}')" class="btn btn-link text-danger p-0">
+                                            <i class="bi bi-x-circle fs-5"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="5" class="text-center py-5 text-muted">ยังไม่มีสินค้าในตะกร้า</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile Card View -->
+            <div class="d-md-none">
+                {% if order_items %}
+                    {% for item in order_items %}
+                        <div class="order-item-mobile">
+                            <button onclick="confirmRemoveItem('{{ item.order_detail_id }}')" class="btn btn-link text-danger p-0 remove-btn">
+                                <i class="bi bi-x-circle fs-5"></i>
+                            </button>
+                            <div class="d-flex align-items-start mb-2">
+                                <img src="/static/img/product/{{ item.product_id }}.png" class="item-img me-3" onerror="this.src='https://placehold.co/60x60?text=Coffee'">
+                                <div>
+                                    <div class="fw-bold" style="font-size: 1rem;">{{ item.product.product_name }}</div>
+                                    <div class="text-muted small">จำนวน: {{ item.quantity }} แก้ว</div>
+                                    <div class="fw-bold mt-1" style="color: var(--latte-main);">฿{{ item.unit_price|floatformat:0 }}</div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <span class="detail-badge w-100">{{ item.note }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4 text-muted">ยังไม่มีสินค้าในตะกร้า</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="checkout-card member-section">
+            <h6 class="fw-bold mb-3">เบอร์โทรศัพท์สมาชิก (สะสมแต้ม)</h6>
+            <div class="row g-2 align-items-center">
+                <div class="col-8 col-md-9">
+                    <input type="tel" id="memberPhone" class="form-control" placeholder="08x-xxx-xxxx" style="border-radius: 12px;">
+                </div>
+                <div class="col-4 col-md-3">
+                    <button type="button" class="btn w-100" onclick="searchCustomer()" style="background-color: var(--latte-main); color: white; border-radius: 12px;">ค้นหา</button>
+                </div>
+            </div>
+            
+            <div id="customerDisplay" class="mt-3 p-3 border rounded-4 bg-white shadow-sm" style="display: none; border-style: dashed !important;">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">ชื่อลูกค้า:</span>
+                    <span id="displayCusName" class="fw-bold">-</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">แต้มสะสม:</span>
+                    <span id="displayCusPoints" class="fw-bold text-primary">0</span>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <button type="button" class="btn btn-link btn-sm text-decoration-none" data-bs-toggle="modal" data-bs-target="#registerModal">
+                    ยังไม่เป็นสมาชิก? สมัครใหม่ที่นี่
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Payment & Summary -->
+    <div class="col-lg-4">
+        <div class="checkout-card summary-sticky">
+            <h5 class="fw-bold mb-3">ชำระเงิน</h5>
+            
+            <div class="row g-2 mb-4">
+                <div class="col-4">
+                    <input type="radio" class="btn-check" name="payType" id="cash" value="cash" checked onchange="toggleQR(false)">
+                    <label class="payment-option-card w-100" for="cash">เงินสด</label>
+                </div>
+                <div class="col-4">
+                    <input type="radio" class="btn-check" name="payType" id="qr" value="qr" onchange="toggleQR(true)">
+                    <label class="payment-option-card w-100" for="qr">QR Code</label>
+                </div>
+                <div class="col-4">
+                    <input type="radio" class="btn-check" name="payType" id="credit" value="credit" onchange="toggleQR(false)">
+                    <label class="payment-option-card w-100" for="credit">บัตร</label>
+                </div>
+            </div>
+
+            <div id="qr-code-display" class="bg-light rounded-4 mb-4" style="display: none;">
+                <div class="p-3 text-center">
+                    <p class="small text-muted mb-2">สแกนเพื่อจ่ายเงิน</p>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=LatteCafePayment" alt="QR Code" class="img-fluid border p-2 bg-white rounded-3 shadow-sm">
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">ยอดรวม</span>
+                <span>฿{{ total|floatformat:0 }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <span class="fw-bold">ยอดสุทธิ</span>
+                <span class="fw-bold h3 mb-0" style="color: var(--latte-main);">฿{{ total|floatformat:0 }}</span>
+            </div>
+
+            <button id="confirmPaymentBtn" class="btn btn-confirm-pay" onclick="submitOrder()">
+                <i class="bi bi-shield-lock-fill me-2"></i>ยืนยันการชำระเงิน
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Slip Modal -->
+<div class="modal fade" id="slipModal" tabindex="-1" aria-labelledby="slipModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none; box-shadow: 0 15px 50px rgba(0,0,0,0.1);">
+      <div class="modal-body p-0">
+        <div id="receipt-content" class="receipt-container" style="font-family: 'Courier New', Courier, monospace; background: #fff; padding: 30px; color: #333;">
+            <div class="receipt-header" style="text-align: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-size: 28px; font-weight: bold; color: var(--latte-main);">H2O CAFE</h2>
+                <p style="margin: 5px 0 0 0; font-size: 14px; color: #888;">ใบเสร็จรับเงิน / Receipt</p>
+            </div>
+            <div class="receipt-divider" style="border-top: 1px dashed #ccc; margin: 15px 0;"></div>
+            <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px;">
+                <span>Order ID:</span>
+                <span id="slipOrderId" style="font-weight: bold;"></span>
+            </div>
+            <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px;">
+                <span>วันที่/Date:</span>
+                <span id="slipDate"></span>
+            </div>
+            <div class="receipt-divider" style="border-top: 1px dashed #ccc; margin: 15px 0;"></div>
+            <div id="slipItems">
+                <!-- Items will be injected here -->
+            </div>
+            <div class="receipt-divider" style="border-top: 1px dashed #ccc; margin: 15px 0;"></div>
+            <div class="receipt-row receipt-total" style="display: flex; justify-content: space-between; margin-top: 10px; font-weight: bold; font-size: 18px; color: var(--latte-main);">
+                <span>ยอดรวม/Total:</span>
+                <span id="slipTotal"></span>
+            </div>
+            <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px;">
+                <span>ชำระโดย/Payment:</span>
+                <span id="slipPayment"></span>
+            </div>
+            <div class="receipt-divider" style="border-top: 1px dashed #ccc; margin: 15px 0;"></div>
+            <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px;">
+                <span>ลูกค้า/Customer:</span>
+                <span id="slipCustomer"></span>
+            </div>
+            <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px;">
+                <span>แต้มที่ได้รับ/Points:</span>
+                <span id="slipPoints"></span>
+            </div>
+            <div class="receipt-footer" style="text-align: center; margin-top: 30px; font-size: 13px; color: #888;">
+                <p style="margin-bottom: 5px;">ขอบคุณที่ใช้บริการ / Thank you!</p>
+                <div class="badge bg-light text-dark p-2" style="border-radius: 10px; font-family: 'Prompt', sans-serif;">
+                    กลับสู่หน้าหลักใน <span id="slipCountdown" class="fw-bold text-primary">5</span> วินาที
+                </div>
+            </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 justify-content-center bg-white pb-4">
+        <button type="button" class="btn btn-primary px-4" style="border-radius: 12px; background-color: var(--latte-main); border: none;" onclick="window.location.href='{% url 'home' %}'">กลับหน้าหลักทันที</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Register Modal -->
+<div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="registerModalLabel">สมัครสมาชิกใหม่</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-3">
+        <form id="registerForm">
+          <div class="mb-3">
+            <label for="regName" class="form-label small text-muted">ชื่อ-นามสกุล</label>
+            <input type="text" class="form-control" id="regName" placeholder="กรอกชื่อลูกค้า" required style="border-radius: 12px;">
+          </div>
+          <div class="mb-3">
+            <label for="regPhone" class="form-label small text-muted">เบอร์โทรศัพท์</label>
+            <input type="tel" class="form-control" id="regPhone" placeholder="08x-xxx-xxxx" required style="border-radius: 12px;">
+          </div>
+          <button type="submit" class="btn w-100 py-2 mt-2" style="background-color: var(--latte-main); color: white; border-radius: 12px; font-weight: 600;">ยืนยันการสมัคร</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block script %}
+<script>
+    function toggleQR(show) {
+        document.getElementById('qr-code-display').style.display = show ? 'block' : 'none';
+    }
+
+    function confirmRemoveItem(itemId) {
+        Swal.fire({
+            title: 'ลบรายการ?',
+            text: "คุณต้องการลบเมนูนี้ออกจากรายการสั่งซื้อใช่หรือไม่?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#C2A385',
+            confirmButtonText: 'ลบรายการ',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/remove_order_item/" + itemId + "/";
+            }
+        })
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Handle Membership Registration
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const name = document.getElementById('regName').value.trim();
+        const phone = document.getElementById('regPhone').value.trim();
+
+        fetch('{% url "register_customer" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: new URLSearchParams({ name, phone }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'สำเร็จ!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                // ปิด modal
+                const modalElement = document.getElementById('registerModal');
+                const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+                modal.hide();
+                
+                // ใส่เบอร์โทรในช่องสะสมแต้มให้อัตโนมัติ
+                document.getElementById('memberPhone').value = data.phone;
+                // และทำการค้นหาทันที
+                searchCustomer();
+            } else if (data.error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ผิดพลาด',
+                    text: data.error,
+                    confirmButtonColor: '#C2A385'
+                });
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'กรุณาลองใหม่อีกครั้ง',
+                confirmButtonColor: '#C2A385'
+            });
+            console.error('register error:', error);
+        });
+    });
+
+    function searchCustomer() {
+        const phone = document.getElementById('memberPhone').value.trim();
+        if (!phone) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'กรุณากรอกเบอร์โทรศัพท์',
+                confirmButtonColor: '#C2A385'
+            });
+            return;
+        }
+
+        fetch(`{% url 'get_customer_info' %}?phone=${phone}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('customerDisplay').style.display = 'block';
+                document.getElementById('displayCusName').textContent = data.name;
+                document.getElementById('displayCusPoints').textContent = data.points;
+                Swal.fire({
+                    icon: 'success',
+                    title: 'พบข้อมูลสมาชิก',
+                    text: `คุณ${data.name} มีแต้มสะสม ${data.points} แต้ม`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                document.getElementById('customerDisplay').style.display = 'none';
+                Swal.fire({
+                    icon: 'info',
+                    title: 'ไม่พบข้อมูล',
+                    text: data.message || 'ไม่พบสมาชิกในระบบ',
+                    confirmButtonColor: '#C2A385'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Search error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'ไม่สามารถค้นหาข้อมูลได้',
+                confirmButtonColor: '#C2A385'
+            });
+        });
+    }
+
+    function submitOrder() {
+        const phone = document.getElementById('memberPhone').value.trim();
+        const payTypeElement = document.querySelector('input[name="payType"]:checked');
+        const payType = payTypeElement ? payTypeElement.value : 'cash';
+
+        // disable button to prevent double click
+        document.getElementById('confirmPaymentBtn').disabled = true;
+
+        fetch('{% url "submit_order" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: new URLSearchParams({ phone, payType }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Populate Slip
+                document.getElementById('slipOrderId').textContent = data.order_id;
+                document.getElementById('slipDate').textContent = data.datetime;
+                document.getElementById('slipTotal').textContent = '฿ ' + data.total.toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('slipPayment').textContent = data.payment_method;
+                document.getElementById('slipCustomer').textContent = data.customer_name;
+                document.getElementById('slipPoints').textContent = '+' + data.points_earned;
+
+                const itemsContainer = document.getElementById('slipItems');
+                itemsContainer.innerHTML = '';
+                data.items.forEach(item => {
+                    const itemRow = document.createElement('div');
+                    itemRow.style.marginBottom = '8px';
+                    itemRow.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                            <span style="flex: 1;">${item.name} x ${item.quantity}</span>
+                            <span style="font-weight: bold;">฿ ${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                        </div>
+                        <div style="font-size: 11px; color: #888; padding-left: 10px; line-height: 1.2;">
+                            ${item.note}
+                        </div>
+                    `;
+                    itemsContainer.appendChild(itemRow);
+                });
+
+                // Show slip modal
+                const modal = new bootstrap.Modal(document.getElementById('slipModal'), {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                modal.show();
+
+                // Countdown for redirect
+                let count = 5;
+                const countdownElement = document.getElementById('slipCountdown');
+                const timer = setInterval(() => {
+                    count--;
+                    if(countdownElement) countdownElement.textContent = count;
+                    if(count <= 0) {
+                        clearInterval(timer);
+                        window.location.href = '{% url "home" %}';
+                    }
+                }, 1000);
+
+            } else if (data.error) {
+                document.getElementById('confirmPaymentBtn').disabled = false;
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ผิดพลาด',
+                    text: data.error,
+                    confirmButtonColor: '#C2A385'
+                });
+            }
+        })
+        .catch(error => {
+            document.getElementById('confirmPaymentBtn').disabled = false;
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'กรุณาลองใหม่อีกครั้ง',
+                confirmButtonColor: '#C2A385'
+            });
+            console.error('submitOrder error:', error);
+        });
+    }
+</script>
+{% endblock %}

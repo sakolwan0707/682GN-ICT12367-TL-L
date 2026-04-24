@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    <title>Admin Management - H2O</title>
+{% endblock %}
+
+{% block style %}
+<style>
+    :root {
+        --latte-main: #C2A385;
+        --latte-light: #E6D5C3;
+        --soft-white: #FAF9F6;
+        --text-dark: #4A4A4A;
+        --status-on: #28a745;
+        --status-off: #dc3545;
+        --status-sold: #ffc107;
+    }
+
+    body { background-color: var(--soft-white); font-family: 'Prompt', sans-serif; }
+
+    .admin-container {
+        background: white;
+        border-radius: 25px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        border: 1px solid rgba(194, 163, 133, 0.1);
+    }
+
+    /* Search Bar Styling */
+    .search-group {
+        background: #fff;
+        border: 1.5px solid var(--latte-light);
+        border-radius: 15px;
+        padding: 5px 15px;
+        display: flex;
+        align-items: center;
+        transition: 0.3s;
+    }
+    .search-group:focus-within {
+        border-color: var(--latte-main);
+        box-shadow: 0 0 0 3px rgba(194, 163, 133, 0.1);
+    }
+    .search-group input {
+        border: none;
+        outline: none;
+        padding: 8px 10px;
+        width: 100%;
+        font-size: 0.95rem;
+    }
+
+    /* Product Card Styling */
+    .product-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #f0f0f0;
+        transition: 0.3s;
+        overflow: hidden;
+    }
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+    }
+    .product-img-wrapper {
+        width: 70px;
+        height: 70px;
+        min-width: 70px;
+        border-radius: 15px;
+        overflow: hidden;
+        background: #f8f8f8;
+    }
+
+    /* Responsive Button Styling */
+    .btn-responsive {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        border: 1px solid #eee !important;
+        background-color: #fff !important;
+        padding: 8px 15px;
+        border-radius: 12px !important;
+        min-height: 38px;
+    }
+    .btn-responsive i { font-size: 0.9rem; }
+    .btn-responsive span { font-weight: 500; font-size: 0.9rem; }
+
+    @media (max-width: 767.98px) {
+        .btn-responsive {
+            width: 35px;
+            height: 35px;
+            min-height: 35px;
+            padding: 0;
+            border-radius: 50% !important;
+        }
+        .btn-responsive span {
+            display: none;
+        }
+    }
+
+    /* Badge Styling */
+    .badge-status {
+        padding: 6px 12px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .status-on { background-color: #e6f4ea; color: #1e7e34; }
+    .status-off { background-color: #fce8e8; color: #d93025; }
+    .status-sold { background-color: #fff4e5; color: #b05d06; }
+
+    /* Modal Styling */
+    .modal-content { border-radius: 25px; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
+    .modal-header { border-bottom: 1px solid #f0f0f0; padding: 25px; }
+    .btn-save { background-color: var(--latte-main); color: white; border-radius: 12px; padding: 10px; border: none; transition: 0.3s; }
+    .btn-save:hover { background-color: #a88a6d; transform: scale(1.02); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <!-- Top Navigation & Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <a href="{% url 'employee_nav' %}" class="btn btn-link text-decoration-none text-muted p-0 mb-2 d-inline-block">
+                <i class="bi bi-chevron-left"></i> กลับไปหน้าเมนูหลัก
+            </a>
+            <h2 class="fw-bold mb-0" style="color: var(--latte-main); letter-spacing: -1px;">จัดการข้อมูลเมนูอาหาร</h2>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap flex-md-nowrap">
+            <div class="search-group shadow-sm me-md-2" style="max-width: 350px; width: 100%;">
+                <i class="bi bi-search text-muted"></i>
+                <form method="GET" action="{% url 'admin_manage' %}" id="adminSearchForm" class="w-100">
+                    <input type="text" name="search" id="adminSearchInput" placeholder="ค้นหาชื่อเมนู..." value="{{ search_query }}" style="border: none; outline: none; width: 100%; background: transparent;" autocomplete="off">
+                </form>
+                {% if search_query %}
+                    <a href="{% url 'admin_manage' %}" class="text-muted"><i class="bi bi-x-circle-fill"></i></a>
+                {% endif %}
+            </div>
+            <button class="btn btn-success px-4 shadow-sm" onclick="openAddModal()" style="border-radius: 12px; height: 45px; font-weight: 500; min-width: 140px; white-space: nowrap;">
+                <i class="bi bi-plus-lg me-2"></i>เพิ่มเมนูใหม่
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="admin-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold mb-0"><i class="bi bi-grid-3x3-gap me-2"></i>รายการอาหารและเครื่องดื่ม</h5>
+            <span class="text-muted small">ทั้งหมด {{ products.paginator.count }} รายการ</span>
+        </div>
+
+        <div class="row g-4">
+            {% for prod in products %}
+            <div class="col-12 col-lg-6">
+                <div class="product-card p-3 shadow-sm h-100">
+                    <div class="d-flex align-items-center">
+                        <!-- รูปภาพ -->
+                        <div class="product-img-wrapper me-3">
+                            <img src="{% static 'img/product/' %}{{ prod.product_id }}.png" 
+                                 alt="{{ prod.product_name }}"
+                                 class="w-100 h-100" style="object-fit: cover;"
+                                 onerror="this.src='https://placehold.co/100x100?text=Food'">
+                        </div>
+                        <!-- ข้อมูลสินค้า -->
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="small text-muted mb-1">{{ prod.category.category_name }}</div>
+                                    <h6 class="fw-bold mb-1">{{ prod.product_name }} ({{ prod.size|default:"-" }})</h6>
+                                    
+                                    {% if prod.is_active == 'True' %}
+                                        <span class="badge-status status-on"><i class="bi bi-check-circle-fill me-1"></i> เปิดให้บริการ</span>
+                                    {% elif prod.is_active == 'False' %}
+                                        <span class="badge-status status-off"><i class="bi bi-x-circle-fill me-1"></i> ปิดให้บริการ</span>
+                                    {% elif prod.is_active == 'Sold out' %}
+                                        <span class="badge-status status-sold"><i class="bi bi-exclamation-triangle-fill me-1"></i> สินค้าหมด</span>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    <div class="h5 fw-bold text-primary mb-2">฿{{ prod.price }}</div>
+                                    <button class="btn btn-sm btn-light rounded-circle shadow-sm" 
+                                            onclick="openEditModal('{{ prod.product_id }}', '{{ prod.product_name }}', '{{ prod.price }}', '{{ prod.is_active }}')"
+                                            style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #eee;">
+                                        <i class="bi bi-pencil-fill text-warning" style="font-size: 0.85rem;"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" style="width: 80px; opacity: 0.3;" class="mb-3">
+                <p class="text-muted">ไม่พบข้อมูลเมนูที่คุณค้นหา</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+        <div class="d-flex justify-content-center mt-5">
+            <nav>
+                <ul class="pagination pagination-sm g-2">
+                    {% if products.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link border-0 rounded-3 me-2" href="?p_page={{ products.previous_page_number }}&search={{ search_query }}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link border-0 rounded-3 px-3" style="background-color: var(--latte-main);">{{ products.number }}</span>
+                    </li>
+                    
+                    {% if products.has_next %}
+                        <li class="page-item">
+                            <a class="page-link border-0 rounded-3 ms-2" href="?p_page={{ products.next_page_number }}&search={{ search_query }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal: เพิ่มเมนูใหม่ -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle-fill me-2 text-success"></i>เพิ่มเมนูใหม่</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addProductForm" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ชื่อเมนู</label>
+                        <input type="text" class="form-control" name="name" required style="border-radius: 12px; padding: 10px;" placeholder="เช่น อเมริกาโน่เย็น">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold">ราคา (บาท)</label>
+                            <input type="number" step="0.01" class="form-control" name="price" required style="border-radius: 12px; padding: 10px;">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold">ขนาด</label>
+                            <select class="form-select" name="size" style="border-radius: 12px; padding: 10px;">
+                                <option value="S">S (เล็ก)</option>
+                                <option value="M" selected>M (กลาง)</option>
+                                <option value="L">L (ใหญ่)</option>
+                                <option value="XL">XL (พิเศษ)</option>
+                                <option value="-">ไม่มีขนาด</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">หมวดหมู่</label>
+                        <select class="form-select" name="category_id" required style="border-radius: 12px; padding: 10px;">
+                            {% for cat in categories %}
+                            <option value="{{ cat.category_id }}">{{ cat.category_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">รูปภาพสินค้า</label>
+                        <input type="file" class="form-control" name="image" accept="image/*" style="border-radius: 12px; padding: 10px;">
+                        <div class="form-text small">แนะนำไฟล์ PNG หรือ JPG ขนาดจตุรัส</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">สถานะเริ่มต้น</label>
+                        <select class="form-select" name="status" style="border-radius: 12px; padding: 10px;">
+                            <option value="On">On - เปิดให้บริการ</option>
+                            <option value="Off">Off - ปิดให้บริการชั่วคราว</option>
+                            <option value="Sold out">Sold out - สินค้าหมด</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4">
+                    <button type="submit" class="btn btn-save w-100 fw-bold shadow-sm" style="background-color: #28a745;">ยืนยันการเพิ่มเมนู</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: แก้ไขสินค้า -->
+<div class="modal fade" id="editProductModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2 text-warning"></i>แก้ไขข้อมูลเมนู</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editProductForm" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <input type="hidden" id="editProdId" name="product_id">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ชื่อเมนู</label>
+                        <input type="text" class="form-control" id="editProdName" name="name" required style="border-radius: 12px; padding: 10px;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ราคา (บาท)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0" style="border-radius: 12px 0 0 12px;">฿</span>
+                            <input type="number" step="0.01" class="form-control border-start-0" id="editProdPrice" name="price" required style="border-radius: 0 12px 12px 0; padding: 10px;">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">เปลี่ยนรูปภาพ (ถ้ามี)</label>
+                        <input type="file" class="form-control" name="image" accept="image/*" style="border-radius: 12px; padding: 10px;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">สถานะการให้บริการ</label>
+                        <select class="form-select" id="editProdStatus" name="status" style="border-radius: 12px; padding: 10px;">
+                            <option value="On">On - เปิดให้บริการ</option>
+                            <option value="Off">Off - ปิดให้บริการชั่วคราว</option>
+                            <option value="Sold out">Sold out - สินค้าหมด</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4">
+                    <button type="submit" class="btn btn-save w-100 fw-bold shadow-sm">บันทึกการเปลี่ยนแปลง</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    function openEditModal(id, name, price, isActive) {
+        document.getElementById('editProdId').value = id;
+        document.getElementById('editProdName').value = name;
+        document.getElementById('editProdPrice').value = price;
+        let status = 'On';
+        if (isActive === 'False') status = 'Off';
+        else if (isActive === 'Sold out') status = 'Sold out';
+        document.getElementById('editProdStatus').value = status;
+        new bootstrap.Modal(document.getElementById('editProductModal')).show();
+    }
+
+    // ฟังก์ชันแก้ไขสินค้า (รองรับรูปภาพ)
+    document.getElementById('editProductForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('{% url "edit_product" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: formData
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: 'สำเร็จ', 
+                    text: data.message, 
+                    showConfirmButton: false, 
+                    timer: 1200 
+                }).then(() => location.reload());
+            } else {
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: data.error });
+            }
+        });
+    });
+
+    // ฟังก์ชันเปิด Modal เพิ่มสินค้า
+    function openAddModal() {
+        new bootstrap.Modal(document.getElementById('addProductModal')).show();
+    }
+
+    // ฟังก์ชันเพิ่มสินค้าใหม่ (รองรับรูปภาพ)
+    document.getElementById('addProductForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        // แสดง Loading
+        Swal.fire({
+            title: 'กำลังบันทึกข้อมูล...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        fetch('{% url "add_product" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: formData
+        }).then(res => res.json()).then(data => {
+            Swal.close();
+            if (data.success) {
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: 'สำเร็จ!', 
+                    text: data.message, 
+                    showConfirmButton: false, 
+                    timer: 1500 
+                }).then(() => location.reload());
+            } else {
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: data.error });
+            }
+        }).catch(err => {
+            Swal.close();
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้' });
+        });
+    });
+
+    // ระบบค้นหาแบบ Live Search (ไม่ต้องกด Enter)
+    let searchTimer;
+    const searchInput = document.getElementById('adminSearchInput');
+    const searchForm = document.getElementById('adminSearchForm');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimer);
+            // หน่วงเวลา 500ms ก่อนเริ่มค้นหาเพื่อให้พิมพ์เสร็จก่อน
+            searchTimer = setTimeout(() => {
+                searchForm.submit();
+            }, 500);
+        });
+
+        // เลื่อน Cursor ไปท้ายสุดเมื่อโหลดหน้า (กรณีมีการพิมพ์ค้างไว้)
+        const val = searchInput.value;
+        searchInput.value = '';
+        searchInput.value = val;
+        searchInput.focus();
+    }
+</script>
+{% endblock %}

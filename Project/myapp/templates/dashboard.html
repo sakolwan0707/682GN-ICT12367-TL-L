@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+    <title>Dashboard - H2O</title>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{% url 'employee_nav' %}" class="btn btn-outline-secondary btn-sm" style="border-radius: 10px;">
+                <i class="bi bi-arrow-left"></i> กลับหน้าเมนูหลัก
+            </a>
+        </div>
+    </div>
+
+    <h2 class="fw-bold mb-4" style="color: var(--latte-main);">สรุปภาพรวมร้าน (Dashboard)</h2>
+
+    <div class="row g-4 mb-4">
+        <!-- รายได้รวม -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 20px;">
+                <h6 class="text-muted mb-2 text-center">รายได้รวมทั้งหมด</h6>
+                <h2 class="fw-bold mb-0 text-center" style="color: #28a745;">฿{{ total_sales|floatformat:2|intcomma }}</h2>
+                <div class="mt-3 mx-auto" style="max-width: 60%;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- จำนวน Order -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 20px;">
+                <h6 class="text-muted mb-2 text-center">จำนวนออเดอร์ทั้งหมด</h6>
+                <h2 class="fw-bold mb-0 text-center text-primary">{{ total_orders_count }} <small style="font-size: 1rem;">รายการ</small></h2>
+                <div class="mt-3 mx-auto" style="max-width: 60%;">
+                    <canvas id="orderChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- วัตถุดิบใกล้หมด -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 20px;">
+                <h6 class="text-muted mb-2 text-center">วัตถุดิบที่ต้องเติม (Low Stock)</h6>
+                <h2 class="fw-bold mb-0 text-center text-danger">{{ low_stock_count }} <small style="font-size: 1rem;">รายการ</small></h2>
+                <div class="mt-auto pt-3 text-center">
+                    <a href="{% url 'stock_manage' %}#stock" class="btn btn-sm btn-outline-danger w-100" style="border-radius: 10px;">จัดการสต็อก</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- อันดับเมนูขายดี -->
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 20px;">
+                <h5 class="fw-bold mb-4">อันดับ 5 เมนูที่ขายดีที่สุด</h5>
+                <div class="row align-items-center justify-content-center">
+                    <div class="col-md-4 text-center">
+                        <div class="mx-auto" style="max-width: 80%;">
+                            <canvas id="topSellingChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="list-group list-group-flush">
+                            {% for item in top_selling_items %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                <div>
+                                    <span class="badge bg-primary rounded-circle me-2">{{ forloop.counter }}</span>
+                                    {{ item.product__product_name }}
+                                </div>
+                                <span class="fw-bold">{{ item.total_qty }} ชิ้น</span>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted">ยังไม่มีข้อมูลการขาย</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // ข้อมูลสำหรับกราฟ
+    const topLabels = [{% for item in top_selling_items %}"{{ item.product__product_name }}",{% endfor %}];
+    const topData = [{% for item in top_selling_items %}{{ item.total_qty }},{% endfor %}];
+
+    // กราฟเมนูขายดี
+    new Chart(document.getElementById('topSellingChart'), {
+        type: 'doughnut',
+        data: {
+            labels: topLabels,
+            datasets: [{
+                data: topData,
+                backgroundColor: [
+                    '#C2A385', '#E6D5C3', '#4A4A4A', '#8E735B', '#D4C3B3'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // กราฟรายได้ (Simple Line)
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'line',
+        data: {
+            labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'],
+            datasets: [{
+                label: 'Revenue',
+                data: [1200, 1900, 1500, 2500, {{ total_sales }}],
+                borderColor: '#28a745',
+                tension: 0.4,
+                fill: true,
+                backgroundColor: 'rgba(40, 167, 69, 0.1)'
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: { x: { display: false }, y: { display: false } }
+        }
+    });
+
+    // กราฟออเดอร์ (Simple Bar)
+    new Chart(document.getElementById('orderChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'],
+            datasets: [{
+                label: 'Orders',
+                data: [10, 15, 8, 20, {{ total_orders_count }}],
+                backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: { x: { display: false }, y: { display: false } }
+        }
+    });
+</script>
+{% endblock %}

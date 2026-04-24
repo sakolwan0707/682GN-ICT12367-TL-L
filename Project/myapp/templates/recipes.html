@@ -1,0 +1,554 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    <title>Recipe Management - H2O</title>
+{% endblock %}
+
+{% block style %}
+    <style>
+        :root {
+            --latte-main: #C2A385;
+            --latte-light: #E6D5C3;
+            --soft-white: #FAF9F6;
+            --text-dark: #4A4A4A;
+        }
+
+        body {
+            background-color: var(--soft-white);
+            font-family: 'Prompt', sans-serif;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        /* Responsive Grid Styling */
+        .product-card {
+            background: #fff;
+            border-radius: 20px;
+            border: 1px solid #f0f0f0;
+            transition: 0.3s;
+            overflow: hidden;
+            height: 100%;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        }
+        .product-img-wrapper {
+            width: 70px;
+            height: 70px;
+            min-width: 70px;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #f8f8f8;
+        }
+        .product-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-img-sm {
+            width: 45px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .search-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .btn-back {
+            border-radius: 12px;
+            padding: 10px 20px;
+            color: var(--text-dark);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .btn-back:hover {
+            background-color: #eee;
+            color: var(--text-dark);
+        }
+
+        /* Recipe Modal Styling (Slip Style) */
+        .recipe-slip {
+            font-family: 'Courier New', Courier, monospace;
+            background: #fff;
+            padding: 30px;
+            color: #333;
+        }
+        .slip-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .slip-divider {
+            border-top: 1px dashed #ccc;
+            margin: 15px 0;
+        }
+        .slip-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        /* Responsive Button Styling */
+        .btn-responsive {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid #eee !important;
+            background-color: #fff !important;
+            padding: 8px 15px;
+            border-radius: 12px !important;
+            min-height: 38px;
+        }
+        .btn-responsive i { font-size: 0.9rem; }
+        .btn-responsive span { font-weight: 500; font-size: 0.9rem; }
+
+        @media (max-width: 767.98px) {
+            .btn-responsive {
+                width: 35px;
+                height: 35px;
+                min-height: 35px;
+                padding: 0;
+                border-radius: 50% !important;
+            }
+            .btn-responsive span {
+                display: none;
+            }
+        }
+
+        .ingredient-row-edit {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="{% url 'employee_nav' %}" class="btn btn-outline-secondary btn-sm" style="border-radius: 10px;">
+                <i class="bi bi-arrow-left"></i> กลับหน้าเมนูหลัก
+            </a>
+        </div>
+    </div>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <h2 class="fw-bold mb-0" style="color: var(--latte-main);">จัดการสูตรเครื่องดื่ม</h2>
+        <div style="max-width: 350px; width: 100%;">
+            <div class="input-group shadow-sm" style="border-radius: 12px; overflow: hidden; border: 1px solid var(--latte-light);">
+                <span class="input-group-text bg-white border-0 pe-0">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="text" id="recipeSearchInput" class="form-control border-0" 
+                       placeholder="ค้นหาชื่อเมนูหรือหมวดหมู่..." 
+                       style="box-shadow: none; height: 40px; font-size: 0.9rem;">
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4" id="recipeGrid">
+        {% for product in products %}
+        <div class="col-12 col-lg-6 recipe-card-item" 
+             data-product-name="{{ product.product_name|lower }}" 
+             data-category-name="{{ product.category.category_name|lower }}">
+            <div class="product-card p-3 shadow-sm">
+                <div class="d-flex align-items-center">
+                    <!-- รูปภาพ -->
+                    <div class="product-img-wrapper me-3">
+                        <img src="{% static 'img/product/' %}{{ product.product_id }}.png" 
+                             onerror="this.src='https://placehold.co/100x100?text={{ product.product_name|urlencode }}'">
+                    </div>
+                    <!-- ข้อมูลสินค้า -->
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="small text-muted mb-1">{{ product.category.category_name }}</div>
+                                <h6 class="fw-bold mb-1">{{ product.product_name }}</h6>
+                                
+                                {% if product.is_active == 'True' %}
+                                    <span class="badge bg-success small" style="font-size: 0.7rem; border-radius: 8px;">เปิดบริการ</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark small" style="font-size: 0.7rem; border-radius: 8px;">สินค้าหมด</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <div class="d-flex flex-column gap-2">
+                                    <button class="btn btn-sm btn-light rounded-circle shadow-sm" 
+                                            onclick="viewRecipeDetails('{{ product.product_id }}')"
+                                            title="ดูสูตร"
+                                            style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #eee;">
+                                        <i class="bi bi-journal-text text-primary" style="font-size: 0.85rem;"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-light rounded-circle shadow-sm" 
+                                            onclick="openEditRecipeModal('{{ product.product_id }}')"
+                                            title="แก้ไข"
+                                            style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #eee;">
+                                        <i class="bi bi-pencil-fill text-warning" style="font-size: 0.85rem;"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
+            ไม่พบข้อมูลเมนู
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Recipe Detail Modal (Slip Style) -->
+<div class="modal fade" id="recipeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 15px; overflow: hidden; border: none; box-shadow: 0 15px 50px rgba(0,0,0,0.1);">
+            <div class="modal-body p-0">
+                <div class="recipe-slip">
+                    <div class="slip-header">
+                        <h2 style="margin: 0; font-size: 24px; font-weight: bold; color: var(--latte-main);">RECIPE SLIP</h2>
+                        <p style="margin: 5px 0 0 0; font-size: 14px; color: #888;">สูตรการทำเครื่องดื่ม</p>
+                    </div>
+                    <div class="slip-divider"></div>
+                    <div class="slip-row">
+                        <span>เมนู/Menu:</span>
+                        <span id="modalProductName" style="font-weight: bold;"></span>
+                    </div>
+                    <div class="slip-row">
+                        <span>หมวดหมู่/Category:</span>
+                        <span id="modalCategory"></span>
+                    </div>
+                    <div class="slip-divider"></div>
+                    <div style="font-weight: bold; margin-bottom: 10px; font-size: 14px;">ส่วนผสม / Ingredients:</div>
+                    <div id="modalIngredients"></div>
+                    <div class="slip-divider"></div>
+                    <div id="modalDescriptionContainer" style="display: none;">
+                        <div style="font-weight: bold; margin-bottom: 5px; font-size: 14px;">วิธีทำ / Instructions:</div>
+                        <p id="modalDescription" style="font-size: 13px; line-height: 1.5; color: #555; white-space: pre-line;"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center bg-white pb-4">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal" style="border-radius: 12px; border: none;">ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Recipe Modal -->
+<div class="modal fade" id="editRecipeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">แก้ไขสูตร: <span id="editModalProductName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRecipeForm">
+                    <input type="hidden" id="editProductId" name="product_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">วิธีทำ / คำแนะนำเพิ่มเติม</label>
+                        <textarea class="form-control" id="editDescription" name="description" rows="3" 
+                                  placeholder="ระบุขั้นตอนการชง หรือเทคนิคพิเศษ..." style="border-radius: 12px;"></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold m-0">ส่วนผสมที่ใช้</label>
+                        <button type="button" class="btn btn-sm btn-success" onclick="addIngredientRow()">
+                            <i class="bi bi-plus-lg"></i> เพิ่มวัตถุดิบ
+                        </button>
+                    </div>
+                    
+                    <div id="editIngredientsContainer">
+                        <!-- Ingredient rows will be added here -->
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary w-100 fw-bold" 
+                                style="border-radius: 12px; height: 45px; background-color: var(--latte-main); border: none;">
+                            บันทึกข้อมูลสูตร
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template for Ingredient Row -->
+<div id="ingredientRowTemplate" style="display: none;">
+    <div class="row g-2 align-items-center ingredient-row-edit">
+        <div class="col-md-7">
+            <select class="form-select ingredient-select" name="ingredient_ids[]" required style="border-radius: 10px;">
+                <option value="">เลือกวัตถุดิบ...</option>
+                {% for ing in all_ingredients %}
+                <option value="{{ ing.ingredient_id }}" data-unit="{{ ing.unit }}">{{ ing.ingredient_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <div class="input-group">
+                <input type="number" step="0.01" class="form-control" name="quantities[]" placeholder="ปริมาณ" required style="border-radius: 10px 0 0 10px;">
+                <span class="input-group-text unit-display" style="border-radius: 0 10px 10px 0; min-width: 60px;">-</span>
+            </div>
+        </div>
+        <div class="col-md-2 text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm border-0" onclick="removeRow(this)">
+                <i class="bi bi-trash3 fs-5"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    // Real-time Search Filter for Recipes
+    function filterRecipes() {
+        const searchText = document.getElementById('recipeSearchInput').value.toLowerCase();
+        const cards = document.querySelectorAll('.recipe-card-item');
+        
+        cards.forEach(card => {
+            const productName = card.dataset.productName;
+            const categoryName = card.dataset.categoryName;
+            
+            if (productName.includes(searchText) || categoryName.includes(searchText)) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    document.getElementById('recipeSearchInput').addEventListener('input', filterRecipes);
+
+    function setSafeText(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    }
+
+    function viewRecipeDetails(productId) {
+        fetch(`{% url 'get_recipe_details' %}?product_id=${productId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                setSafeText('modalProductName', data.product_name);
+                setSafeText('modalCategory', data.category);
+                
+                const ingredientsContainer = document.getElementById('modalIngredients');
+                if (ingredientsContainer) {
+                    ingredientsContainer.innerHTML = '';
+                    if (data.items.length > 0) {
+                        data.items.forEach(item => {
+                            const row = document.createElement('div');
+                            row.className = 'slip-row';
+                            row.innerHTML = `
+                                <span>${item.ingredient_name}</span>
+                                <span style="font-weight: bold;">${item.quantity} ${item.unit}</span>
+                            `;
+                            ingredientsContainer.appendChild(row);
+                        });
+                    } else {
+                        ingredientsContainer.innerHTML = '<p class="text-center text-muted small">ไม่มีข้อมูลวัตถุดิบ</p>';
+                    }
+                }
+
+                const descContainer = document.getElementById('modalDescriptionContainer');
+                if (descContainer) {
+                    if (data.description) {
+                        setSafeText('modalDescription', data.description);
+                        descContainer.style.display = 'block';
+                    } else {
+                        descContainer.style.display = 'none';
+                    }
+                }
+
+                new bootstrap.Modal(document.getElementById('recipeModal')).show();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถดึงข้อมูลสูตรได้'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'เกิดข้อผิดพลาดในการติดต่อเซิร์ฟเวอร์'
+            });
+        });
+    }
+
+    function openEditRecipeModal(productId) {
+        Swal.fire({
+            title: 'กำลังโหลดข้อมูล...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        fetch(`{% url 'get_recipe_details' %}?product_id=${productId}`)
+        .then(response => response.json())
+        .then(data => {
+            Swal.close();
+            if (data.success) {
+                document.getElementById('editProductId').value = data.product_id;
+                document.getElementById('editModalProductName').textContent = data.product_name;
+                document.getElementById('editDescription').value = data.description;
+                
+                const container = document.getElementById('editIngredientsContainer');
+                container.innerHTML = '';
+                
+                // Fetch full data with IDs
+                refreshEditIngredients(data.product_id);
+                
+                new bootstrap.Modal(document.getElementById('editRecipeModal')).show();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถดึงข้อมูลได้'
+                });
+            }
+        })
+        .catch(error => {
+            Swal.close();
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'เกิดข้อผิดพลาดในการดึงข้อมูล'
+            });
+        });
+    }
+
+    function refreshEditIngredients(productId) {
+        fetch(`{% url 'get_recipe_details' %}?product_id=${productId}`)
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById('editIngredientsContainer');
+            container.innerHTML = '';
+            
+            if (data.items && data.items.length > 0) {
+                data.items.forEach(item => {
+                    addIngredientRow(item.ingredient_id, item.quantity);
+                });
+            } else {
+                addIngredientRow();
+            }
+        });
+    }
+
+    function addIngredientRow(ingId = '', qty = '') {
+        const template = document.getElementById('ingredientRowTemplate').innerHTML;
+        const container = document.getElementById('editIngredientsContainer');
+        const div = document.createElement('div');
+        div.innerHTML = template;
+        const row = div.firstElementChild;
+        container.appendChild(row);
+
+        const select = row.querySelector('.ingredient-select');
+        const input = row.querySelector('input');
+        const unitDisplay = row.querySelector('.unit-display');
+
+        if (ingId) select.value = ingId;
+        if (qty) input.value = qty;
+
+        // อัปเดตหน่วยเมื่อเปลี่ยนวัตถุดิบ
+        const updateUnit = () => {
+            const selected = select.options[select.selectedIndex];
+            unitDisplay.textContent = selected.dataset.unit || '-';
+        };
+        select.addEventListener('change', updateUnit);
+        if (ingId) updateUnit();
+    }
+
+    function removeRow(btn) {
+        const container = document.getElementById('editIngredientsContainer');
+        if (container.children.length > 1) {
+            btn.closest('.ingredient-row-edit').remove();
+        } else {
+            // ถ้าเหลือแถวสุดท้าย ให้เคลียร์ข้อมูลแทนการลบ
+            const row = btn.closest('.ingredient-row-edit');
+            row.querySelector('select').value = '';
+            row.querySelector('input').value = '';
+            row.querySelector('.unit-display').textContent = '-';
+        }
+    }
+
+    document.getElementById('editRecipeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        Swal.fire({
+            title: 'กำลังบันทึกข้อมูล...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        fetch('{% url "save_recipe" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'สำเร็จ!',
+                    text: data.message,
+                    confirmButtonColor: '#C2A385'
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: data.error || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้'
+            });
+        });
+    });
+</script>
+{% endblock %}
+

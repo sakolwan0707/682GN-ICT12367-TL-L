@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+    {% block title %}
+        <title>H2O Coffee</title>
+    {% endblock %}
+    {% block style %}
+        <style>
+        /* 2. Banner Section (Carousel) */
+        .carousel-item {
+            height: 250px;
+            background-color: #333;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        @media (min-width: 768px) {
+            .carousel-item {
+                height: 400px;
+            }
+        }
+        .carousel-banner-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.7);
+        }
+        .carousel-caption {
+            bottom: 20%;
+            z-index: 10;
+        }
+        .carousel-caption h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+        }
+        @media (min-width: 768px) {
+            .carousel-caption h1 {
+                font-size: 3.5rem;
+            }
+        }
+        .carousel-indicators [data-bs-target] {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin: 0 5px;
+        }
+        .promo-banner-container {
+            margin-bottom: 30px;
+        }
+        @media (min-width: 768px) {
+            .promo-banner-container {
+                margin-bottom: 50px;
+            }
+        }
+
+        /* 3. Menu Gallery Section */
+        .menu-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .menu-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(194, 163, 133, 0.15);
+            transition: all 0.3s ease;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        }
+
+        @media (max-width: 575.98px) {
+            .menu-card {
+                padding: 10px;
+                border-radius: 15px;
+            }
+        }
+
+        /* Hover Effect */
+        .menu-card:hover:not(.sold-out) {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(166, 123, 91, 0.12);
+            border-color: var(--latte-main);
+        }
+
+        .menu-card.sold-out {
+            opacity: 0.7;
+            filter: grayscale(100%);
+            cursor: not-allowed;
+            position: relative;
+            pointer-events: none; /* ป้องกันการคลิกที่ตัว card */
+        }
+
+        .sold-out-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            background: rgba(220, 53, 69, 0.95);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            z-index: 10;
+            border: 2px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        .menu-img-wrapper {
+            width: 100%;
+            aspect-ratio: 1/1;
+            overflow: hidden;
+            border-radius: 15px;
+            margin-bottom: 12px;
+        }
+
+        .menu-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .menu-card:hover .menu-img {
+            transform: scale(1.1);
+        }
+
+        .menu-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            /* จำกัดบรรทัดชื่อเมนู */
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 2.8rem;
+        }
+
+        .menu-price {
+            color: var(--latte-main);
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-top: auto;
+        }
+
+        /* Category Buttons Responsive */
+        .filter-btn {
+            border-radius: 12px;
+            padding: 8px 20px;
+            font-weight: 500;
+            border: 1px solid var(--latte-light);
+            background: white;
+            color: var(--latte-main);
+            transition: 0.2s;
+        }
+        
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--latte-main);
+            color: white;
+            border-color: var(--latte-main);
+        }
+
+    </style>
+    {% endblock %}
+     
+    {% block content%}
+    <!-- Bootstrap Carousel Banner -->
+    <div id="promoCarousel" class="carousel slide promo-banner-container" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#promoCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+            <button type="button" data-bs-target="#promoCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+            <button type="button" data-bs-target="#promoCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        </div>
+        <div class="carousel-inner shadow-sm" style="border-radius: 20px;">
+            <!-- Slide 1 -->
+            <div class="carousel-item active" data-bs-interval="5000">
+                <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1200&auto=format&fit=crop" class="carousel-banner-img" alt="H2O Coffee Banner 1">
+                <div class="carousel-caption">
+                    <h1>Welcome to H2O CAFE</h1>
+                    <p class="lead d-none d-sm-block">เริ่มต้นวันใหม่ด้วยกาแฟหอมๆ และเมนูพิเศษเฉพาะคุณ</p>
+                </div>
+            </div>
+            <!-- Slide 2 -->
+            <div class="carousel-item" data-bs-interval="5000">
+                <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=1200&auto=format&fit=crop" class="carousel-banner-img" alt="H2O Coffee Banner 2">
+                <div class="carousel-caption">
+                    <h1>Special Promotion</h1>
+                    <p class="lead d-none d-sm-block">พบกับโปรโมชั่นประจำเดือนที่รอให้คุณมาลิ้มลอง</p>
+                </div>
+            </div>
+            <!-- Slide 3 -->
+            <div class="carousel-item" data-bs-interval="5000">
+                <img src="https://images.unsplash.com/photo-1442512595331-e89e73853f31?q=80&w=1200&auto=format&fit=crop" class="carousel-banner-img" alt="H2O Coffee Banner 3">
+                <div class="carousel-caption">
+                    <h1>Quality Ingredients</h1>
+                    <p class="lead d-none d-sm-block">เราคัดสรรวัตถุดิบคุณภาพดีที่สุด เพื่อรสชาติที่ลงตัว</p>
+                </div>
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#promoCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#promoCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+
+    <div class="container menu-container px-2 px-md-4">
+        <div class="text-center mb-4">
+            <h2 style="color: var(--latte-main); font-weight: 600;">Recommended Menu</h2>
+            <div style="width: 50px; height: 3px; background: var(--latte-main); margin: 10px auto;"></div>
+        </div>
+        
+        <!-- Filter Buttons -->
+        <div class="d-flex flex-nowrap overflow-auto pb-3 justify-content-start justify-content-md-center gap-2 mb-4 no-scrollbar" style="-webkit-overflow-scrolling: touch;">
+            <button class="filter-btn active text-nowrap" onclick="filterMenu('all', this)">ทั้งหมด</button>
+            {% for type in product_type %}
+                <button class="filter-btn text-nowrap" onclick="filterMenu('{{ type.category_name }}', this)">
+                    {{ type.category_name }}
+                </button>
+            {% endfor %}
+        </div>
+
+        <!-- Menu section -->
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 g-md-4 justify-content-start">
+        {% load static %}
+        {% for menu in menu %}
+            <div class="col menu-item" data-category="{{ menu.category.category_name }}" data-id="{{ menu.product_id }}">
+                <div class="menu-card {% if menu.is_active == 'Sold out' %}sold-out{% endif %}">
+                    {% if menu.is_active == 'Sold out' %}
+                        <div class="sold-out-badge">Sold Out</div>
+                    {% endif %}
+                    <div class="menu-img-wrapper">
+                        <img src="{% static 'img/product/' %}{{ menu.product_id }}.png" alt="{{ menu.product_name }}" class="menu-img" onerror="this.src='https://placehold.co/400x400?text=Coffee'">
+                    </div>
+                    <div class="menu-name">{{ menu.product_name }}</div>
+                    <div class="menu-price">฿{{ menu.price|floatformat:0 }}</div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+
+    </div>
+
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+{% endblock %}
+{% block script %}
+<script>
+    // Handle menu card click
+    document.querySelectorAll('.menu-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (card.classList.contains('sold-out')) {
+                e.preventDefault();
+                return;
+            }
+            
+            const itemElement = card.closest('.menu-item');
+            const productId = itemElement.getAttribute('data-id');
+            const productCategory = itemElement.getAttribute('data-category');
+            
+            const menuData = {
+                id: productId,
+                name: card.querySelector('.menu-name').innerText,
+                price: parseFloat(card.querySelector('.menu-price').innerText.replace(/[^\d.]/g, '')),
+                category: productCategory,
+                imageName: productId + ".png" 
+            };
+            
+            localStorage.setItem('tempItem', JSON.stringify(menuData));
+            window.location.href = "{% url 'order' %}"; 
+        });
+    });
+
+    function filterMenu(category, btn) {
+        // Update active button
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const items = document.querySelectorAll('.menu-item');
+        items.forEach(item => {
+            const itemCategory = item.getAttribute('data-category');
+            if (category === 'all' || itemCategory === category) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}
